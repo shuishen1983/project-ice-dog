@@ -75,7 +75,7 @@ Skaters and goalies use the same fixed timestep and determinism rules as the puc
 - If two pokes would connect on the same tick, they resolve in deterministic command order and the first consumes the contact.
 
 ## Possession Resolution
-- Pickup: a loose puck within `PICKUP_RADIUS` of an eligible skater becomes held by that skater.
+- Pickup: a loose puck within `PICKUP_RADIUS` of an eligible skater becomes held by that skater. Pickup is automatic and requires no input; entering the radius takes possession.
 - Receive: the intended receiver of a pass collects the puck within `RECEIVE_RADIUS` (larger than `PICKUP_RADIUS`) regardless of puck speed.
 - One-timer: within `ONE_TIMER_WINDOW_TICKS` of the puck entering the receiver's `RECEIVE_RADIUS`, a shoot command releases a shot directly without settled possession.
 - Eligibility: skaters under `REPOSSESS_LOCKOUT_TICKS` are ineligible; goalies use the save model below instead of pickup rules.

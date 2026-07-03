@@ -101,4 +101,4 @@ Acceptance tests should exercise simulation behavior through public commands and
 - AT-016 Required HUD and rink elements render.
   - Given the browser game starts
   - When the first gameplay snapshot is rendered
-  - Then rink, boards, goals, puck, skaters, goalies, score, period, clock, and selected-player marker are visible.
+  - Then rink, boards, goals, puck, skaters, goalies, score, period, clock, selected-player marker, and skater facing indicators are visible.

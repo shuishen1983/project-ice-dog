@@ -143,7 +143,13 @@ The MVP uses a simple player-switching model:
 
 ### Aiming Rules
 - A skater's facing is the direction of the most recent nonzero movement input; it defaults to facing the attacking goal at faceoffs.
-- Pass with no explicit target selects the teammate with the best open lane inside a 120 degree cone centered on facing; if no teammate is in the cone, the pass releases along facing.
+- Pass with no explicit target selects a receiver deterministically:
+  1. Candidates are teammates inside a 120 degree cone centered on facing.
+  2. Each candidate's lane openness is the perpendicular distance from the nearest opponent to the pass line between carrier and candidate.
+  3. The candidate with the greatest openness wins; ties break by smallest angle from facing, then ascending player id.
+  4. If no candidate exists, the pass releases along facing.
+- The human chooses between receivers by steering facing toward the intended teammate before pressing pass.
+- Because aiming derives from facing, the renderer must draw a facing indicator on every skater (for example a short stick line or nose wedge), with a stronger indicator on the selected skater.
 - Shoot targets the attacking goal mouth. The aim point inside the goal mouth is shaded toward the post nearest the shooter's facing direction, so steering up or down while shooting picks a corner.
 - Poke check acts along facing.
 
