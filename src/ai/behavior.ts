@@ -192,7 +192,7 @@ function moveGoalie(state: GameState, goalie: GoalieState): GoalieState {
 }
 
 function isHumanControlled(state: GameState, player: PlayerState): boolean {
-  return player.teamId === 'home' && player.id === state.teams.home.controlledPlayerId;
+  return Boolean(state.humanTeamId && player.teamId === state.humanTeamId && player.id === state.teams[player.teamId].controlledPlayerId);
 }
 
 function closestEligibleSkater(state: GameState, teamId: TeamId): PlayerState | undefined {

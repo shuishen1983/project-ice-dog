@@ -1,5 +1,5 @@
 import type { GameCommand } from './commands';
-import { FACE_OFF, MODE_PAUSE, PERIOD_COUNT, PERIOD_SECONDS, RINK, TICK_SECONDS } from './constants';
+import { FACE_OFF, MODE_PAUSE, PERIOD_COUNT, RINK, TICK_SECONDS } from './constants';
 import type { GameEvent } from './events';
 import type { GameState, PlayerState, TeamId } from './state';
 import { attackingGoalX, defendingDirectionX, faceoffFormation, findPlayer, goalieCreasePosition } from './state';
@@ -56,8 +56,8 @@ export function isCommandAllowed(state: GameState, command: GameCommand): boolea
       return false;
     }
 
-    if (command.source !== 'ai' && command.type === 'move' && player.teamId === 'home') {
-      return player.id === state.teams.home.controlledPlayerId;
+    if (command.source !== 'ai' && command.type === 'move' && state.humanTeamId && player.teamId === state.humanTeamId) {
+      return player.id === state.teams[state.humanTeamId].controlledPlayerId;
     }
 
     return true;
@@ -85,7 +85,7 @@ export function startFaceoff(state: GameState, tick: number, spotId = 'center'):
     teams: {
       home: {
         ...state.teams.home,
-        roster: resetRosterForFaceoff(state.teams.home.roster, 'home', homeControlled),
+        roster: resetRosterForFaceoff(state.teams.home.roster, 'home', homeControlled, state.humanTeamId),
         goalie: {
           ...state.teams.home.goalie,
           position: goalieCreasePosition('home', state.period),
@@ -94,7 +94,7 @@ export function startFaceoff(state: GameState, tick: number, spotId = 'center'):
       },
       away: {
         ...state.teams.away,
-        roster: resetRosterForFaceoff(state.teams.away.roster, 'away', awayControlled),
+        roster: resetRosterForFaceoff(state.teams.away.roster, 'away', awayControlled, state.humanTeamId),
         goalie: {
           ...state.teams.away.goalie,
           position: goalieCreasePosition('away', state.period),
@@ -248,7 +248,7 @@ export function advanceTimedMode(state: GameState): GameState {
       {
         ...state,
         period: state.period + 1,
-        clockSeconds: PERIOD_SECONDS,
+        clockSeconds: state.periodSeconds,
       },
       state.tick,
     );
@@ -257,14 +257,19 @@ export function advanceTimedMode(state: GameState): GameState {
   return state;
 }
 
-function resetRosterForFaceoff(roster: PlayerState[], teamId: TeamId, controlledPlayerId: string): PlayerState[] {
+function resetRosterForFaceoff(
+  roster: PlayerState[],
+  teamId: TeamId,
+  controlledPlayerId: string,
+  humanTeamId?: TeamId,
+): PlayerState[] {
   const formation = faceoffFormation(teamId);
   return roster.map((player, index) => ({
     ...player,
     position: formation[index]?.[1] ?? player.position,
     velocity: { x: 0, y: 0 },
     facing: { x: teamId === 'home' ? 1 : -1, y: 0 },
-    hasHumanControl: player.id === controlledPlayerId,
+    hasHumanControl: humanTeamId === teamId && player.id === controlledPlayerId,
     intent: 'idle',
   }));
 }

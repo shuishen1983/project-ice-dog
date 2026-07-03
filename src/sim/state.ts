@@ -74,10 +74,12 @@ export type FaceoffState = {
 export type GameState = {
   seed: number;
   aiEnabled: boolean;
+  humanTeamId?: TeamId;
   tick: number;
   mode: GameMode;
   modeStartedTick: number;
   period: number;
+  periodSeconds: number;
   clockSeconds: number;
   winnerTeamId?: TeamId;
   faceoff?: FaceoffState;
@@ -105,6 +107,8 @@ export type InitialGameConfig = {
   seed?: number;
   startInGameplay?: boolean;
   enableAi?: boolean;
+  humanTeamId?: TeamId | null;
+  periodSeconds?: number;
 };
 
 const HOME_START: Array<[PlayerRole, Vec2]> = [
@@ -120,6 +124,8 @@ const AWAY_START: Array<[PlayerRole, Vec2]> = [
 ];
 
 export function createInitialState(config: InitialGameConfig = {}): GameState {
+  const humanTeamId = config.humanTeamId === null ? undefined : config.humanTeamId ?? 'home';
+  const periodSeconds = config.periodSeconds ?? PERIOD_SECONDS;
   const homeRoster = createRoster('home', config.startInGameplay ? HOME_START : faceoffFormation('home'), 'home-c');
   const awayRoster = createRoster('away', config.startInGameplay ? AWAY_START : faceoffFormation('away'), 'away-c');
   const homeCenter = homeRoster[0] as PlayerState;
@@ -137,11 +143,13 @@ export function createInitialState(config: InitialGameConfig = {}): GameState {
   return {
     seed: config.seed ?? 1,
     aiEnabled: config.enableAi ?? false,
+    humanTeamId,
     tick: 0,
     mode: initialMode,
     modeStartedTick: 0,
     period: 1,
-    clockSeconds: PERIOD_SECONDS,
+    periodSeconds,
+    clockSeconds: periodSeconds,
     faceoff: config.startInGameplay
       ? undefined
       : {
@@ -156,7 +164,7 @@ export function createInitialState(config: InitialGameConfig = {}): GameState {
         side: 'left',
         roster: homeRoster.map((player, index) => ({
           ...player,
-          hasHumanControl: index === 0,
+          hasHumanControl: humanTeamId === 'home' && index === 0,
         })),
         goalie: {
           id: 'home-g',
@@ -217,7 +225,7 @@ export function createRenderSnapshot(state: GameState): RenderSnapshot {
     goalies: [state.teams.home.goalie, state.teams.away.goalie],
     puck: state.puck,
     rink: state.rink,
-    selectedPlayerId: state.teams.home.controlledPlayerId,
+    selectedPlayerId: state.humanTeamId ? state.teams[state.humanTeamId].controlledPlayerId : undefined,
     recentEvents: state.events.slice(-8),
   };
 }

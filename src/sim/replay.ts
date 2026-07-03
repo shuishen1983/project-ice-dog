@@ -27,9 +27,11 @@ export function stateHash(state: GameState): string {
     stableStringify({
       seed: state.seed,
       aiEnabled: state.aiEnabled,
+      humanTeamId: state.humanTeamId,
       tick: state.tick,
       mode: state.mode,
       period: state.period,
+      periodSeconds: round(state.periodSeconds),
       clockSeconds: round(state.clockSeconds),
       winnerTeamId: state.winnerTeamId,
       faceoff: state.faceoff,

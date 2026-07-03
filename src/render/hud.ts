@@ -19,8 +19,11 @@ export class Hud {
     const seconds = Math.floor(snapshot.clockSeconds % 60)
       .toString()
       .padStart(2, '0');
+    const possession = snapshot.puck.ownerId
+      ? `PUCK ${snapshot.puck.ownerId.toUpperCase()}`
+      : `PUCK ${snapshot.puck.intent.toUpperCase()}`;
     this.text.setText(
-      `HOME ${snapshot.score.home}  AWAY ${snapshot.score.away}    P${snapshot.period} ${minutes}:${seconds}    ${snapshot.mode}`,
+      `HOME ${snapshot.score.home}  AWAY ${snapshot.score.away}    P${snapshot.period} ${minutes}:${seconds}    ${snapshot.mode}    ${possession}`,
     );
   }
 }

@@ -53,20 +53,20 @@ export const GOALIE = {
 export const PUCK = {
   radius: 1.1,
   stickOffset: 3.2,
-  pickupRadius: 3.4,
+  pickupRadius: 3.8,
   repossessLockoutTicks: 18,
   pokeRange: 5,
   frictionDecel: 18,
   stopSpeed: 0.25,
   boardRestitution: 0.72,
   postRestitution: 0.48,
-  oneTimerWindowTicks: 18,
+  oneTimerWindowTicks: 20,
 };
 
 export const PASS = {
-  speed: 45,
+  speed: 48,
 };
 
 export const SHOT = {
-  speed: 80,
+  speed: 86,
 };

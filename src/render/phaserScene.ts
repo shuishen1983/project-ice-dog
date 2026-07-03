@@ -127,10 +127,16 @@ export class IceScene extends Phaser.Scene {
   private drawPlayers(snapshot: RenderSnapshot) {
     for (const player of snapshot.players) {
       const selected = player.id === snapshot.selectedPlayerId;
+      const hasPuck = player.id === snapshot.puck.ownerId;
       const screenX = toScreenX(player.position.x);
       const screenY = toScreenY(player.position.y);
       this.graphics.fillStyle(player.teamId === 'home' ? 0x0f6bdc : 0xd63d32, 1);
       this.graphics.fillCircle(screenX, screenY, player.radius * SCALE);
+
+      if (hasPuck) {
+        this.graphics.lineStyle(4, 0x2fbf71, 1);
+        this.graphics.strokeCircle(screenX, screenY, player.radius * SCALE + 10);
+      }
 
       const stickLength = (player.radius + (selected ? 3.5 : 2.5)) * SCALE;
       this.graphics.lineStyle(selected ? 4 : 2, selected ? 0xf4c542 : 0x10202f, 1);
@@ -161,6 +167,10 @@ export class IceScene extends Phaser.Scene {
   private drawPuck(snapshot: RenderSnapshot) {
     this.graphics.fillStyle(0x111111, 1);
     this.graphics.fillCircle(toScreenX(snapshot.puck.position.x), toScreenY(snapshot.puck.position.y), 5);
+    if (!snapshot.puck.ownerId) {
+      this.graphics.lineStyle(2, snapshot.puck.intent === 'shot' ? 0xd63d32 : 0x2fbf71, 1);
+      this.graphics.strokeCircle(toScreenX(snapshot.puck.position.x), toScreenY(snapshot.puck.position.y), 9);
+    }
   }
 }
 
