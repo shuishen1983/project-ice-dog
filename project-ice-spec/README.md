@@ -21,3 +21,4 @@ Read PROJECT_ICE_PRD.md first, then review the architecture, gameplay, and hando
 - [requirements/functional.md](requirements/functional.md)
 - [verification/acceptance_tests.md](verification/acceptance_tests.md)
 - [implementation_handoff.md](implementation_handoff.md)
+- [implementation_plan.md](implementation_plan.md)

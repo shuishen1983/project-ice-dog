@@ -52,8 +52,10 @@ src/
     loop.ts
     rules.ts
     replay.ts
+    constants.ts
   physics/
     puck.ts
+    skater.ts
     rink.ts
   ai/
     behavior.ts
@@ -62,6 +64,8 @@ src/
     acceptance/
     physics/
     replay/
+    ai/
+    render/
 ```
 
 ## Agent Guardrails
