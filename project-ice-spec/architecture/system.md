@@ -25,7 +25,7 @@ The game is organized around a central simulation loop with five primary subsyst
    - Must remain deterministic and stable across repeated runs.
 
 4. AI Engine
-   - Controls non-player teammates and the opposing goalie.
+   - Controls all non-human-controlled skaters and both goalies.
    - Uses simple, explainable hockey behaviors such as support, passing, shot generation, and defensive positioning.
 
 5. Renderer and UI
@@ -51,6 +51,19 @@ The simulation runs at a fixed 60 Hz tick. Rendering may run faster or slower, b
 - The home team attacks toward positive X in period 1 and alternates direction by period.
 - Renderer code is responsible for mapping rink units to screen pixels.
 - All commands and events use simulation coordinates, not screen coordinates.
+
+### Rink Geometry
+All values are in rink units (u). One rink unit corresponds to one foot of a proportional NHL rink; the renderer chooses pixel scale.
+
+- Rink: 200 u long (x) by 85 u wide (y); x in `[-100, +100]`, y in `[-42.5, +42.5]`.
+- Corner radius: 28 u.
+- Goal lines: x = -89 and x = +89.
+- Goal mouth: 6 u wide, centered on y = 0; posts at `(±89, -3)` and `(±89, +3)`.
+- Crease: semicircle of radius 6 u centered on the goal mouth, opening toward center ice.
+- Slot: rectangle in front of each goal mouth, extending 22 u from the goal line toward center ice, with `|y| <= 12`.
+- Blue lines: x = -25 and x = +25. In MVP they are visual markers and AI zone boundaries only; no offsides rules apply.
+- Center faceoff spot: `(0, 0)`. MVP rules use only the center spot; zone faceoff spots may be rendered but are unused.
+- Zones: the defensive and offensive zones are the regions beyond each blue line; the neutral zone lies between them. Zone identity depends on the attacking direction for the current period.
 
 ### Canonical Data Contracts
 The implementation may choose exact TypeScript names, but these contracts should remain recognizable.
@@ -84,6 +97,10 @@ type RenderSnapshot = {
 };
 ```
 
+Contract notes:
+- `pass.target`: a `Vec2` aims at a point; a string names a teammate player id. If omitted, rules select the receiving teammate deterministically using the aiming rules below.
+- `switchPlayer.targetPlayerId`: if omitted, the default switch rule below applies.
+
 ## Interaction Flow
 1. Input is captured from the player.
 2. The input layer translates player intent into a command.
@@ -115,6 +132,24 @@ The MVP uses a simple player-switching model:
 - The human controls one skater at a time.
 - Teammates are controlled by the AI.
 - Switching is immediate and should not disrupt the simulation loop.
+
+### Default Input Mapping (Keyboard MVP)
+- Move: WASD or arrow keys; diagonals allowed; input becomes a normalized direction vector.
+- Pass: J or Z.
+- Shoot: K or X.
+- Poke check: L or C.
+- Switch player: Space.
+- Mouse aiming and gamepad support are deferred from MVP.
+
+### Aiming Rules
+- A skater's facing is the direction of the most recent nonzero movement input; it defaults to facing the attacking goal at faceoffs.
+- Pass with no explicit target selects the teammate with the best open lane inside a 120 degree cone centered on facing; if no teammate is in the cone, the pass releases along facing.
+- Shoot targets the attacking goal mouth. The aim point inside the goal mouth is shaded toward the post nearest the shooter's facing direction, so steering up or down while shooting picks a corner.
+- Poke check acts along facing.
+
+### Switch Rule
+- `switchPlayer` without a target selects the eligible skater (never the goalie) closest to the puck, excluding the currently selected skater.
+- Distance ties break by ascending player id so switching is deterministic.
 
 ## Determinism Requirements
 The simulation must be deterministic under the same input sequence and seed. This is essential for:

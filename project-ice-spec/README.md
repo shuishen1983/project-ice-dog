@@ -1,4 +1,4 @@
-# Project ICE v0.4
+# Project ICE v0.5
 
 This repository is an AI-first engineering specification for a browser-based hockey game.
 

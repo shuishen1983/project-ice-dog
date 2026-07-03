@@ -71,6 +71,21 @@ Acceptance tests should exercise simulation behavior through public commands and
   - When defenders assign roles
   - Then at least one defender protects the slot unless all defenders are closer to an immediate loose-puck recovery.
 
+- AT-017 Faceoff contest is deterministic.
+  - Given identical seed, difficulty, and swipe command timing at a faceoff
+  - When the draw resolves
+  - Then the same skater wins the draw, one `faceoffWon` event is emitted, and the drawn-back puck reaches the same position across runs.
+
+- AT-018 Contested pickup resolves deterministically.
+  - Given two skaters eligible to pick up the same loose puck on the same tick
+  - When pickup resolves
+  - Then the closest skater gains possession, exact ties resolve by team id then player id, and the outcome is identical across replays.
+
+- AT-019 Goalie save, trap, and rebound are replay-stable.
+  - Given an identical seeded shot on goal
+  - When the goalie save resolves
+  - Then slow pucks are trapped and released to a defender after the hold period, fast pucks rebound along the same trajectory across runs, and no save outcome differs between replays.
+
 ## Replay And Stability
 - AT-014 Replay deterministic.
   - Given the same seed, initial config, and accepted command log

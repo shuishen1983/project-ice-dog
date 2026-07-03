@@ -38,6 +38,14 @@
 - FR-027 Player input must map to movement, switch, pass, shoot, and poke-check commands.
 - FR-028 Visual feedback must make goals, faceoffs, possession changes, and selected-player changes readable.
 
+## Faceoffs And Physics Detail
+- FR-032 Use the center-ice faceoff spot for all MVP restarts.
+- FR-033 Resolve the faceoff draw deterministically: the first poke-check contact within the faceoff window wins and draws the puck toward a teammate.
+- FR-034 Resolve contested loose-puck pickups deterministically: the closest eligible skater wins, with ties broken by team id then player id.
+- FR-035 Resolve goalie saves geometrically with no random save roll; trapped pucks are released to a defender after a fixed hold, and non-trapped saves emit a rebound.
+- FR-036 Cap puck carrier speed below free-skating speed so defenders can close on the carrier.
+- FR-037 Default player switching selects the eligible skater closest to the puck, with deterministic tie-breaking.
+
 ## Determinism And Replay
 - FR-029 The same seed and command log must reproduce the same final state.
 - FR-030 Replay output must include enough events to diagnose score, possession, faceoff, and period changes.

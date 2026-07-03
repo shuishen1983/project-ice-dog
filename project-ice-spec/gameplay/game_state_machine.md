@@ -24,11 +24,18 @@ Boot -> Menu -> Faceoff -> Gameplay -> Goal -> Faceoff
 - May be skipped in automated tests.
 
 ### Faceoff
-- Positions skaters, goalies, and puck at the selected faceoff spot.
-- Clears transient puck action state.
-- Resets possession to none.
-- Accepts no shot or pass commands.
-- Transitions to `Gameplay` when the faceoff winner is resolved.
+- MVP uses the center-ice spot for all faceoffs (period starts and after goals).
+- Formation: each team's designated center is placed a fixed offset from the spot on its defending side; the other two skaters are placed at deterministic wing positions behind their center; goalies are centered in their creases. The human-selected skater becomes the center for the human team.
+- Clears transient puck action state and resets possession to none.
+- Accepts only switch commands during the countdown; movement, pass, shot, and poke commands are ignored until the drop.
+- The puck is dropped at the spot after `FACEOFF_COUNTDOWN_TICKS`, and the mode transitions to `Gameplay` on the drop tick.
+
+#### Faceoff Contest
+The draw is resolved during normal `Gameplay` using the poke-check mechanic:
+- The first poke-check contact on the puck within `FACEOFF_WINDOW_TICKS` after the drop wins the draw: rules emit `faceoffWon` and physics applies a draw-back impulse sending the puck toward the winner's nearest teammate.
+- The human swipes with the poke-check input. AI centers issue their swipe after a deterministic delay derived from seed, tick, and difficulty.
+- Simultaneous contacts on the same tick cancel: the puck stays loose at the spot and no `faceoffWon` is emitted.
+- If no poke connects within the window, play continues with a loose puck and no `faceoffWon` event.
 
 ### Gameplay
 - Accepts movement, switch, pass, shoot, and poke-check commands.

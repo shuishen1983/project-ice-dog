@@ -44,6 +44,18 @@ This is a flow, not a strict state machine. For example, a bank pass can move di
 - Clock is paused during `Faceoff`, `Goal`, `PeriodEnd`, and `GameEnd`.
 - Period expiration is checked after the tick's gameplay resolution so a puck crossing the goal line during the final tick can still count consistently.
 
+## Timing Constants
+Initial values at 60 Hz. Tuning changes must keep replay and acceptance regressions passing.
+
+| Constant | Initial value | Meaning |
+| --- | --- | --- |
+| `PERIOD_COUNT` | 3 | Regulation periods |
+| `PERIOD_LENGTH_TICKS` | 10800 (180 s) | Regulation length of each period |
+| `GOAL_PAUSE_TICKS` | 180 (3 s) | Deterministic pause in `Goal` before the faceoff |
+| `FACEOFF_COUNTDOWN_TICKS` | 60 (1 s) | Placement hold before the puck drops |
+| `FACEOFF_WINDOW_TICKS` | 45 (0.75 s) | Window after the drop in which a poke contact wins the draw |
+| `ONE_TIMER_WINDOW_TICKS` | 12 (0.2 s) | Window after a pass reaches receive radius in which a shot releases as a one-timer |
+
 ## Replay Behavior
 - Replay records seed, initial configuration, and all accepted human commands.
 - AI commands are derived from seed and state during replay, not stored as source of truth.

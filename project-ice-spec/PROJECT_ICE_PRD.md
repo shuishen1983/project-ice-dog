@@ -1,4 +1,4 @@
-# PROJECT ICE PRD v0.4
+# PROJECT ICE PRD v0.5
 
 ## Vision
 Create a browser-based 2D hockey simulator inspired by tabletop hockey where
