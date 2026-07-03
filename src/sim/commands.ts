@@ -1,11 +1,14 @@
 import type { Vec2 } from './vector';
 
+export type CommandSource = 'human' | 'ai';
+
 export type GameCommand =
-  | { type: 'move'; playerId: string; direction: Vec2; tick: number }
-  | { type: 'switchPlayer'; teamId: string; targetPlayerId?: string; tick: number }
-  | { type: 'pass'; playerId: string; target?: Vec2 | string; tick: number }
-  | { type: 'shoot'; playerId: string; target: Vec2; tick: number }
-  | { type: 'pokeCheck'; playerId: string; direction: Vec2; tick: number };
+  | { type: 'move'; playerId: string; direction: Vec2; tick: number; source?: CommandSource }
+  | { type: 'switchPlayer'; teamId: string; targetPlayerId?: string; tick: number; source?: CommandSource }
+  | { type: 'pass'; playerId: string; target?: Vec2 | string; tick: number; source?: CommandSource }
+  | { type: 'shoot'; playerId: string; target: Vec2; tick: number; source?: CommandSource }
+  | { type: 'dump'; playerId: string; target: Vec2; tick: number; source?: CommandSource }
+  | { type: 'pokeCheck'; playerId: string; direction: Vec2; tick: number; source?: CommandSource };
 
 export function sortCommands(commands: GameCommand[]): GameCommand[] {
   return [...commands].sort((a, b) => {

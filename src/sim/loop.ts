@@ -1,5 +1,6 @@
 import type { GameCommand } from './commands';
 import { sortCommands } from './commands';
+import { createAiCommands, updateGoaliePositions } from '../ai/behavior';
 import { RINK, TICK_SECONDS } from './constants';
 import {
   integrateLoosePuck,
@@ -32,14 +33,15 @@ export type TickResult = {
 
 export function advanceTick(state: GameState, commands: GameCommand[] = []): TickResult {
   const targetTick = state.tick + 1;
-  // Must match replay.ts exactly: stale or future commands never apply, or replays diverge.
-  const tickCommands = sortCommands(commands.filter((command) => command.tick === targetTick));
   let nextState = {
     ...state,
     tick: targetTick,
   };
 
   nextState = advanceTimedMode(nextState);
+  const aiCommands = createAiCommands(nextState, targetTick);
+  // Must match replay.ts exactly: stale or future commands never apply, or replays diverge.
+  const tickCommands = sortCommands([...commands.filter((command) => command.tick === targetTick), ...aiCommands]);
 
   const movementByPlayer = new Map<string, Vec2>();
 
@@ -58,7 +60,7 @@ export function advanceTick(state: GameState, commands: GameCommand[] = []): Tic
       continue;
     }
 
-    if (command.type === 'pass' || command.type === 'shoot') {
+    if (command.type === 'pass' || command.type === 'shoot' || command.type === 'dump') {
       const releasedPuck = releasePuckFromCommand(nextState, command);
       if (releasedPuck) {
         nextState = {
@@ -103,6 +105,7 @@ export function advanceTick(state: GameState, commands: GameCommand[] = []): Tic
   };
 
   nextState = separateSkaterContacts(nextState);
+  nextState = updateGoaliePositions(nextState);
   nextState = resolveGoalieHold(nextState);
 
   nextState = {

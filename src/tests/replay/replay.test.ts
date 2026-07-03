@@ -20,4 +20,22 @@ describe('Pass 2 replay hashing', () => {
     expect(stateHash(second)).toBe(stateHash(first));
     expect(eventLogHash(second.events)).toBe(eventLogHash(first.events));
   });
+
+  it('keeps AI-enabled replay deterministic', () => {
+    const log = {
+      initialConfig: { seed: 29, startInGameplay: true, enableAi: true },
+      commands: [
+        { type: 'move' as const, playerId: 'home-c', direction: { x: 1, y: 0 }, tick: 1 },
+        { type: 'switchPlayer' as const, teamId: 'home', tick: 45 },
+        { type: 'move' as const, playerId: 'home-w', direction: { x: 1, y: -1 }, tick: 46 },
+      ],
+      ticks: 180,
+    };
+
+    const first = runReplay(log);
+    const second = runReplay(log);
+
+    expect(stateHash(second)).toBe(stateHash(first));
+    expect(eventLogHash(second.events)).toBe(eventLogHash(first.events));
+  });
 });

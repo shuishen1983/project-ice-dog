@@ -56,7 +56,7 @@ export function isCommandAllowed(state: GameState, command: GameCommand): boolea
       return false;
     }
 
-    if (command.type === 'move' && player.teamId === 'home') {
+    if (command.source !== 'ai' && command.type === 'move' && player.teamId === 'home') {
       return player.id === state.teams.home.controlledPlayerId;
     }
 

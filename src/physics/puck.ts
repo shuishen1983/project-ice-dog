@@ -43,7 +43,7 @@ export function integrateLoosePuck(puck: PuckState): PuckState {
 
 export function releasePuckFromCommand(
   state: GameState,
-  command: Extract<GameCommand, { type: 'pass' | 'shoot' }>,
+  command: Extract<GameCommand, { type: 'pass' | 'shoot' | 'dump' }>,
 ): PuckState | undefined {
   const owner = findPlayer(state, command.playerId);
   if (!owner) {
@@ -56,7 +56,7 @@ export function releasePuckFromCommand(
 
   const target = resolveCommandTarget(state, command, owner);
   const direction = normalize({ x: target.x - owner.position.x, y: target.y - owner.position.y });
-  const speed = command.type === 'pass' ? PASS.speed : SHOT.speed;
+  const speed = command.type === 'pass' ? PASS.speed : command.type === 'dump' ? PASS.speed * 1.2 : SHOT.speed;
 
   return {
     ...state.puck,
@@ -66,7 +66,7 @@ export function releasePuckFromCommand(
     state: 'loose',
     lastTouchPlayerId: owner.id,
     lastTouchTeamId: owner.teamId,
-    intent: command.type === 'pass' ? 'pass' : 'shot',
+    intent: command.type === 'shoot' ? 'shot' : command.type,
     ageTicks: 0,
     receiveWindow:
       command.type === 'pass'
@@ -409,7 +409,7 @@ function seededJitter(seed: number, tick: number, id: string): number {
 
 function resolveCommandTarget(
   state: GameState,
-  command: Extract<GameCommand, { type: 'pass' | 'shoot' }>,
+  command: Extract<GameCommand, { type: 'pass' | 'shoot' | 'dump' }>,
   owner: PlayerState,
 ): Vec2 {
   if (typeof command.target === 'string') {

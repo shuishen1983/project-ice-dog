@@ -26,6 +26,7 @@ export function stateHash(state: GameState): string {
   return fnv1a(
     stableStringify({
       seed: state.seed,
+      aiEnabled: state.aiEnabled,
       tick: state.tick,
       mode: state.mode,
       period: state.period,

@@ -20,7 +20,7 @@ export class IceScene extends Phaser.Scene {
   }
 
   create() {
-    this.simulation = new FixedStepSimulation(createInitialState({ seed: 1, startInGameplay: true }));
+    this.simulation = new FixedStepSimulation(createInitialState({ seed: 1, startInGameplay: true, enableAi: true }));
     this.graphics = this.add.graphics();
     this.hud = new Hud(this);
     this.cursors = this.input.keyboard?.createCursorKeys();

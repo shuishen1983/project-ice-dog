@@ -73,6 +73,7 @@ export type FaceoffState = {
 
 export type GameState = {
   seed: number;
+  aiEnabled: boolean;
   tick: number;
   mode: GameMode;
   modeStartedTick: number;
@@ -103,6 +104,7 @@ export type RenderSnapshot = {
 export type InitialGameConfig = {
   seed?: number;
   startInGameplay?: boolean;
+  enableAi?: boolean;
 };
 
 const HOME_START: Array<[PlayerRole, Vec2]> = [
@@ -134,6 +136,7 @@ export function createInitialState(config: InitialGameConfig = {}): GameState {
 
   return {
     seed: config.seed ?? 1,
+    aiEnabled: config.enableAi ?? false,
     tick: 0,
     mode: initialMode,
     modeStartedTick: 0,
