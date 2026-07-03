@@ -35,20 +35,64 @@ The game is organized around a central simulation loop with five primary subsyst
 ## Runtime Model
 The authoritative game state lives in a single simulation model that is updated each frame tick. The renderer does not mutate gameplay state directly; it observes state and presents it.
 
+The simulation runs at a fixed 60 Hz tick. Rendering may run faster or slower, but render delta must never change authoritative gameplay results. Any interpolation used by Phaser is visual-only and must be derived from committed simulation state.
+
 ### Core State Objects
-- GameState: period, score, possession, clock, faceoff state, winner, and active mode.
-- TeamState: roster, skater positions, momentum, and controlled player identity.
-- PlayerState: position, velocity, facing direction, selected action, and stamina-like intent state if needed.
-- PuckState: position, velocity, owner, and collision flags.
-- RinkState: boundaries, goal zones, and field dimensions.
+- GameState: seed, tick, period, score, possession, clock, faceoff state, winner, active mode, event log cursor, and teams.
+- TeamState: id, side, roster, goalie, controlled player identity, tactical mode, and recent team events.
+- PlayerState: id, team id, role, position, velocity, facing direction, control state, possession eligibility, cooldowns, and current intent.
+- GoalieState: id, team id, crease position, save radius, reaction cooldown, and current intent.
+- PuckState: position, velocity, owner id if possessed, loose/held state, last touch, collision flags, and shot/pass metadata.
+- RinkState: dimensions, boards, blue-line markers if rendered, creases, goal lines, goal mouths, faceoff spots, and slot regions.
+
+### Coordinate System
+- Use a single simulation coordinate system measured in rink units.
+- The rink center is `(0, 0)`.
+- The home team attacks toward positive X in period 1 and alternates direction by period.
+- Renderer code is responsible for mapping rink units to screen pixels.
+- All commands and events use simulation coordinates, not screen coordinates.
+
+### Canonical Data Contracts
+The implementation may choose exact TypeScript names, but these contracts should remain recognizable.
+
+```ts
+type GameCommand =
+  | { type: 'move'; playerId: string; direction: Vec2; tick: number }
+  | { type: 'switchPlayer'; teamId: string; targetPlayerId?: string; tick: number }
+  | { type: 'pass'; playerId: string; target?: Vec2 | string; tick: number }
+  | { type: 'shoot'; playerId: string; target: Vec2; tick: number }
+  | { type: 'pokeCheck'; playerId: string; direction: Vec2; tick: number };
+
+type GameEvent =
+  | { type: 'goal'; teamId: string; scorerId?: string; tick: number }
+  | { type: 'faceoffStarted'; spotId: string; tick: number }
+  | { type: 'faceoffWon'; teamId: string; playerId: string; tick: number }
+  | { type: 'possessionChanged'; playerId?: string; teamId?: string; tick: number }
+  | { type: 'periodEnded'; period: number; tick: number }
+  | { type: 'gameEnded'; winnerTeamId?: string; tick: number };
+
+type RenderSnapshot = {
+  tick: number;
+  mode: string;
+  clockSeconds: number;
+  score: Record<string, number>;
+  players: PlayerState[];
+  goalies: GoalieState[];
+  puck: PuckState;
+  selectedPlayerId?: string;
+  recentEvents: GameEvent[];
+};
+```
 
 ## Interaction Flow
 1. Input is captured from the player.
 2. The input layer translates player intent into a command.
-3. The rules engine evaluates whether the action is legal.
-4. The physics engine updates puck and skater motion.
-5. The AI engine makes decisions for autonomous units.
-6. The renderer displays the new state and emits UI feedback.
+3. Commands are queued for the next simulation tick.
+4. AI creates commands for autonomous skaters.
+5. The rules engine validates commands and resolves game-mode transitions.
+6. The physics engine updates puck and skater motion.
+7. The rules engine emits authoritative events from the updated state.
+8. The renderer displays the new snapshot and emits UI feedback.
 
 ## Module Boundaries
 Interfaces between systems remain independent and should be defined by plain data contracts rather than hidden coupling.
@@ -58,6 +102,13 @@ Interfaces between systems remain independent and should be defined by plain dat
 - Physics Engine -> SimulationStep
 - AI Engine -> AIAction
 - Renderer <- RenderSnapshot
+
+### Ownership Rules
+- Rules own score, clock, period, faceoff, possession legality, and game end.
+- Physics owns continuous motion, collisions, friction, rebounds, and puck impulses.
+- AI owns command selection for non-human-controlled players only.
+- Input owns human command creation only.
+- Renderer owns sprites, camera, HUD, animation, and visual interpolation only.
 
 ## Control Model
 The MVP uses a simple player-switching model:
@@ -77,6 +128,16 @@ The simulation must be deterministic under the same input sequence and seed. Thi
 - Avoid frame-rate-dependent state changes.
 - Keep all game logic in pure, orderable functions where practical.
 - Record input events for replay.
+- Sort commands by tick, team id, player id, and command type before resolution.
+- Use stable iteration order for players, collisions, and AI decisions.
+- Keep random choices behind a seeded RNG with logged seed and step count.
+- Store replay data as seed plus timestamped commands; derived events should be reproducible.
+
+## Error Handling And Debugging
+- Invalid commands are ignored and may emit a debug-only rejection event.
+- Simulation should never throw during a normal tick because of a user input command.
+- Development builds should expose seed, tick, mode, possession, and last events.
+- Headless tests should be able to advance N ticks and inspect state without rendering.
 
 ## MVP Scope
 The initial release will include:
@@ -94,7 +155,7 @@ Verification should be continuous and tied to gameplay behavior rather than impl
 - Physics regression tests protect puck stability and bank-shot repeatability.
 - AI behavior tests confirm that simple hockey decisions are understandable and consistent.
 
-## Open Design Questions
-- Should the camera be fixed-side or follow the puck?
-- Should the MVP support offside, icing, and penalties later or defer them entirely?
-- How much tactical depth should the AI have before the first polished release?
+## Resolved MVP Defaults
+- Camera: default to fixed-side for MVP; revisit puck-follow only after readability testing.
+- Rules: offsides, icing, penalties, line changes, and fatigue are deferred from MVP.
+- AI depth: first polished release needs readable support, pass, shot, dump, pressure, and slot-protection behaviors before advanced tactics.
