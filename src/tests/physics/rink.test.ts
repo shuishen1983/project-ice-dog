@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { RINK } from '../../sim/constants';
+import { clampToRink } from '../../physics/rink';
 
 describe('rink geometry', () => {
   it('matches the spec rink dimensions', () => {
@@ -25,5 +26,20 @@ describe('rink geometry', () => {
 
   it('uses only the center faceoff spot in MVP', () => {
     expect(RINK.faceoffSpots).toEqual([{ id: 'center', position: { x: 0, y: 0 } }]);
+  });
+
+  it('clamps positions to the corner arc instead of the rectangular corner', () => {
+    const margin = 1.5;
+    const squareCorner = clampToRink({ x: 99, y: 42 }, RINK, margin);
+    const cornerCenter = { x: RINK.width / 2 - RINK.cornerRadius, y: RINK.height / 2 - RINK.cornerRadius };
+    const separation = Math.hypot(squareCorner.x - cornerCenter.x, squareCorner.y - cornerCenter.y);
+
+    expect(separation).toBeLessThanOrEqual(RINK.cornerRadius - margin + 1e-9);
+  });
+
+  it('leaves straight-board positions unchanged by the corner clamp', () => {
+    const margin = 1.5;
+    expect(clampToRink({ x: 0, y: 41 }, RINK, margin)).toEqual({ x: 0, y: 41 });
+    expect(clampToRink({ x: 98.5, y: 0 }, RINK, margin)).toEqual({ x: 98.5, y: 0 });
   });
 });

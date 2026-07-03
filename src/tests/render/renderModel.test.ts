@@ -20,6 +20,7 @@ describe('Pass 4 render smoke model', () => {
     expect(kinds).toContain('score');
     expect(kinds).toContain('periodClock');
     expect(kinds).toContain('debugOverlay');
+    expect(kinds).toContain('controlsHelp');
     expect(kinds).toContain('selectedPlayer');
     expect(kinds).toContain('possessionMarker');
     expect(kinds.filter((kind) => kind === 'skaterFacing')).toHaveLength(6);

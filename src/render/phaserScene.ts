@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { GameCommand } from '../sim/commands';
 import { FixedStepSimulation } from '../sim/loop';
 import { createInitialState, type RenderSnapshot } from '../sim/state';
+import { ControlsHelp } from './controlsHelp';
 import { DebugOverlay } from './debugOverlay';
 import { Hud } from './hud';
 
@@ -26,6 +27,7 @@ export class IceScene extends Phaser.Scene {
     this.graphics = this.add.graphics();
     this.hud = new Hud(this);
     this.debugOverlay = new DebugOverlay(this);
+    new ControlsHelp(this);
     this.cursors = this.input.keyboard?.createCursorKeys();
     this.keys = this.input.keyboard?.addKeys('W,A,S,D,J,K,L,Z,X,C,SPACE') as Record<
       string,

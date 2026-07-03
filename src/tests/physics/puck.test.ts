@@ -30,6 +30,36 @@ describe('Pass 2 puck physics', () => {
     expect(length(state.puck.velocity)).toBe(0);
   });
 
+  it('keeps a loose puck inside the rounded corner boards', () => {
+    let state = noPickupFixture({
+      position: { x: 60, y: 30 },
+      velocity: { x: 60, y: 30 },
+    });
+
+    for (let i = 0; i < 300; i += 1) {
+      state = advanceTick(state).state;
+      const { x, y } = state.puck.position;
+      const cornerCenterX = 100 - 28;
+      const cornerCenterY = 42.5 - 28;
+      if (Math.abs(x) > cornerCenterX && Math.abs(y) > cornerCenterY) {
+        const separation = Math.hypot(Math.abs(x) - cornerCenterX, Math.abs(y) - cornerCenterY);
+        expect(separation).toBeLessThanOrEqual(28 - 1.1 + 1e-6);
+      }
+    }
+  });
+
+  it('reflects a corner bank off the arc normal, not a flat wall', () => {
+    const state = noPickupFixture({
+      position: { x: 95, y: 36 },
+      velocity: { x: 30, y: 30 },
+    });
+    const after = advanceTick(state).state;
+
+    // A flat right wall would only flip vx; the arc normal in the corner also pushes vy back.
+    expect(after.puck.velocity.x).toBeLessThan(0);
+    expect(after.puck.velocity.y).toBeLessThan(30);
+  });
+
   it('reflects the puck from goal posts with reduced speed', () => {
     const state = noPickupFixture({
       position: { x: 88.9, y: 3 },

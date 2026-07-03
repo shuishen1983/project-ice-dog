@@ -38,6 +38,7 @@
 - FR-027 Player input must map to movement, switch, pass, shoot, and poke-check commands.
 - FR-028 Visual feedback must make goals, faceoffs, possession changes, and selected-player changes readable.
 - FR-038 Render a facing indicator on every skater, emphasized on the selected skater, so pass and shot aiming direction is readable.
+- FR-039 Provide a control-hints overlay listing the input mapping, toggled by clicking a visible help button or pressing Ctrl+H.
 
 ## Faceoffs And Physics Detail
 - FR-032 Use the center-ice faceoff spot for all MVP restarts.

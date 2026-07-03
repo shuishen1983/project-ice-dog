@@ -2,6 +2,7 @@ import { GOALIE, PASS, PUCK, RINK, SHOT, TICK_SECONDS } from '../sim/constants';
 import type { GameCommand } from '../sim/commands';
 import type { GameState, GoalieState, PlayerState, PuckState, TeamId } from '../sim/state';
 import { attackingGoalX, findPlayer, getPlayers, puckPositionForOwner } from '../sim/state';
+import { cornerArcAt } from './rink';
 import { add, distance, length, normalize, scale, subtract } from '../sim/vector';
 import type { Vec2 } from '../sim/vector';
 
@@ -286,6 +287,11 @@ function releaseOneTimerFromCommand(
 }
 
 function resolveBoardAndPostCollisions(position: Vec2, velocity: Vec2): { position: Vec2; velocity: Vec2 } {
+  const corner = resolveCornerBoardCollision(position, velocity);
+  if (corner) {
+    return resolvePostCollision(corner.position, corner.velocity);
+  }
+
   const halfWidth = RINK.width / 2 - PUCK.radius;
   const halfHeight = RINK.height / 2 - PUCK.radius;
   let nextPosition = { ...position };
@@ -308,6 +314,31 @@ function resolveBoardAndPostCollisions(position: Vec2, velocity: Vec2): { positi
   }
 
   return resolvePostCollision(nextPosition, nextVelocity);
+}
+
+function resolveCornerBoardCollision(position: Vec2, velocity: Vec2): { position: Vec2; velocity: Vec2 } | undefined {
+  const corner = cornerArcAt(position, RINK, PUCK.radius);
+  if (!corner) {
+    return undefined;
+  }
+
+  const offset = subtract(position, corner.center);
+  const separation = length(offset);
+  if (separation <= corner.radius) {
+    return undefined;
+  }
+
+  const normal = scale(offset, 1 / separation);
+  const normalSpeed = velocity.x * normal.x + velocity.y * normal.y;
+  const reflectedVelocity =
+    normalSpeed > 0
+      ? subtract(velocity, scale(normal, (1 + PUCK.boardRestitution) * normalSpeed))
+      : velocity;
+
+  return {
+    position: add(corner.center, scale(normal, corner.radius)),
+    velocity: reflectedVelocity,
+  };
 }
 
 function resolvePostCollision(position: Vec2, velocity: Vec2): { position: Vec2; velocity: Vec2 } {

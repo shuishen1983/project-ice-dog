@@ -49,6 +49,7 @@ Friction must remove energy over time. Restitution may redirect velocity and pre
 
 ## Collision Rules
 - Boards reflect the velocity component normal to the wall and apply restitution.
+- Corner boards are quarter-circle arcs matching the rink corner radius; collisions there reflect about the arc normal, not a flat wall. Skaters are also confined by the same rounded boundary.
 - Goal posts reflect with lower restitution than boards.
 - Goal line crossing inside the goal mouth emits a goal candidate for rules validation.
 - Puck outside rink bounds must be corrected back inside bounds during the same tick.
