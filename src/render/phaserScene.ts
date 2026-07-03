@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { GameCommand } from '../sim/commands';
 import { FixedStepSimulation } from '../sim/loop';
 import { createInitialState, type RenderSnapshot } from '../sim/state';
+import { DebugOverlay } from './debugOverlay';
 import { Hud } from './hud';
 
 const SCALE = 5;
@@ -12,6 +13,7 @@ export class IceScene extends Phaser.Scene {
   private simulation!: FixedStepSimulation;
   private graphics!: Phaser.GameObjects.Graphics;
   private hud!: Hud;
+  private debugOverlay!: DebugOverlay;
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys?: Record<string, Phaser.Input.Keyboard.Key>;
 
@@ -23,6 +25,7 @@ export class IceScene extends Phaser.Scene {
     this.simulation = new FixedStepSimulation(createInitialState({ seed: 1, startInGameplay: true, enableAi: true }));
     this.graphics = this.add.graphics();
     this.hud = new Hud(this);
+    this.debugOverlay = new DebugOverlay(this);
     this.cursors = this.input.keyboard?.createCursorKeys();
     this.keys = this.input.keyboard?.addKeys('W,A,S,D,J,K,L,Z,X,C,SPACE') as Record<
       string,
@@ -92,6 +95,7 @@ export class IceScene extends Phaser.Scene {
     this.drawPlayers(snapshot);
     this.drawPuck(snapshot);
     this.hud.render(snapshot);
+    this.debugOverlay.render(snapshot);
   }
 
   private drawRink(snapshot: RenderSnapshot) {
@@ -102,6 +106,8 @@ export class IceScene extends Phaser.Scene {
     const height = rink.height * SCALE;
     const cornerRadius = rink.cornerRadius * SCALE;
 
+    this.graphics.fillStyle(0xf7fbff, 1);
+    this.graphics.fillRect(0, 0, 1100, 640);
     this.graphics.fillStyle(0xeaf8ff, 1);
     this.graphics.fillRoundedRect(left, top, width, height, cornerRadius);
     this.graphics.lineStyle(4, 0x1f5d7a, 1);

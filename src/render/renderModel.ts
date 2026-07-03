@@ -13,7 +13,8 @@ export type RenderElementKind =
   | 'goalie'
   | 'puck'
   | 'score'
-  | 'periodClock';
+  | 'periodClock'
+  | 'debugOverlay';
 
 export type RenderElement = {
   kind: RenderElementKind;
@@ -32,6 +33,7 @@ export function buildRenderModel(snapshot: RenderSnapshot): RenderElement[] {
     { kind: 'puck', id: 'puck' },
     { kind: 'score', id: 'score' },
     { kind: 'periodClock', id: 'period-clock' },
+    { kind: 'debugOverlay', id: 'debug-overlay' },
   ];
 
   for (const player of snapshot.players) {

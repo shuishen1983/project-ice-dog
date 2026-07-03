@@ -90,6 +90,8 @@ export type GameState = {
 };
 
 export type RenderSnapshot = {
+  seed: number;
+  aiEnabled: boolean;
   tick: number;
   mode: GameMode;
   period: number;
@@ -99,6 +101,7 @@ export type RenderSnapshot = {
   goalies: GoalieState[];
   puck: PuckState;
   rink: typeof RINK;
+  humanTeamId?: TeamId;
   selectedPlayerId?: string;
   recentEvents: GameEvent[];
 };
@@ -213,6 +216,8 @@ export function createInitialState(config: InitialGameConfig = {}): GameState {
 export function createRenderSnapshot(state: GameState): RenderSnapshot {
   const players = getPlayers(state);
   return {
+    seed: state.seed,
+    aiEnabled: state.aiEnabled,
     tick: state.tick,
     mode: state.mode,
     period: state.period,
@@ -225,6 +230,7 @@ export function createRenderSnapshot(state: GameState): RenderSnapshot {
     goalies: [state.teams.home.goalie, state.teams.away.goalie],
     puck: state.puck,
     rink: state.rink,
+    humanTeamId: state.humanTeamId,
     selectedPlayerId: state.humanTeamId ? state.teams[state.humanTeamId].controlledPlayerId : undefined,
     recentEvents: state.events.slice(-8),
   };
