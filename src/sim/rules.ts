@@ -12,7 +12,7 @@ export function applySwitchCommand(state: GameState, command: Extract<GameComman
     return state;
   }
 
-  const nextPlayerId = command.targetPlayerId ?? closestToPuckPlayerId(state, team.roster, team.controlledPlayerId);
+  const nextPlayerId = command.targetPlayerId ?? nextEligibleRosterPlayerId(team.roster, team.controlledPlayerId);
   const targetPlayer = team.roster.find((player) => player.id === nextPlayerId);
   if (!targetPlayer) {
     return state;
@@ -297,20 +297,18 @@ function winnerForScore(state: GameState): TeamId | undefined {
   return state.teams.home.score > state.teams.away.score ? 'home' : 'away';
 }
 
-function closestToPuckPlayerId(state: GameState, roster: PlayerState[], currentPlayerId: string): string {
-  const candidates = roster
-    .filter((player) => player.id !== currentPlayerId && player.possessionEligible)
-    .sort((a, b) => a.id.localeCompare(b.id));
+function nextEligibleRosterPlayerId(roster: PlayerState[], currentPlayerId: string): string {
+  const currentIndex = roster.findIndex((player) => player.id === currentPlayerId);
+  if (currentIndex === -1) {
+    return roster.find((player) => player.possessionEligible)?.id ?? currentPlayerId;
+  }
 
-  let best: PlayerState | undefined;
-  let bestDistance = Number.POSITIVE_INFINITY;
-  for (const candidate of candidates) {
-    const candidateDistance = distance(candidate.position, state.puck.position);
-    if (candidateDistance < bestDistance) {
-      best = candidate;
-      bestDistance = candidateDistance;
+  for (let offset = 1; offset <= roster.length; offset += 1) {
+    const candidate = roster[(currentIndex + offset) % roster.length];
+    if (candidate?.possessionEligible) {
+      return candidate.id;
     }
   }
 
-  return best?.id ?? currentPlayerId;
+  return currentPlayerId;
 }

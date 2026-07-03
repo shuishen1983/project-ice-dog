@@ -51,20 +51,16 @@ describe('Pass 0 foundation', () => {
     expect(snapshot.puck.position).toEqual(expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) }));
   });
 
-  it('switches to the skater closest to the puck when no target is given', () => {
+  it('cycles to the next eligible roster skater when no target is given', () => {
     const initial = createInitialState({ startInGameplay: true });
-    const puckPosition = initial.puck.position;
-    const others = initial.teams.home.roster.filter((player) => player.id !== initial.teams.home.controlledPlayerId);
-    const expected = [...others].sort((a, b) => {
-      const distanceDiff =
-        Math.hypot(a.position.x - puckPosition.x, a.position.y - puckPosition.y) -
-        Math.hypot(b.position.x - puckPosition.x, b.position.y - puckPosition.y);
-      return distanceDiff !== 0 ? distanceDiff : a.id.localeCompare(b.id);
-    })[0];
+    const firstExpected = initial.teams.home.roster[1]?.id;
+    const secondExpected = initial.teams.home.roster[2]?.id;
 
-    const after = advanceTick(initial, [{ type: 'switchPlayer', teamId: 'home', tick: 1 }]).state;
+    const firstSwitch = advanceTick(initial, [{ type: 'switchPlayer', teamId: 'home', tick: 1 }]).state;
+    const secondSwitch = advanceTick(firstSwitch, [{ type: 'switchPlayer', teamId: 'home', tick: 2 }]).state;
 
-    expect(after.teams.home.controlledPlayerId).toBe(expected?.id);
+    expect(firstSwitch.teams.home.controlledPlayerId).toBe(firstExpected);
+    expect(secondSwitch.teams.home.controlledPlayerId).toBe(secondExpected);
   });
 
   it('places goalies inside the rink in front of their goal lines', () => {
