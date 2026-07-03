@@ -1,4 +1,4 @@
-import { GOALIE, PERIOD_SECONDS, PUCK, RINK, SKATER } from './constants';
+import { FACE_OFF, GOALIE, PERIOD_SECONDS, PUCK, RINK, SKATER } from './constants';
 import type { GameEvent } from './events';
 import type { Vec2 } from './vector';
 import { normalize } from './vector';
@@ -26,6 +26,7 @@ export type GoalieState = {
   teamId: TeamId;
   position: Vec2;
   radius: number;
+  reactionAvailableTick: number;
   intent: 'holdCrease';
 };
 
@@ -48,15 +49,37 @@ export type PuckState = {
   lastTouchTeamId?: TeamId;
   intent: PuckIntent;
   ageTicks: number;
+  repossessLockout?: {
+    playerId: string;
+    untilTick: number;
+  };
+  receiveWindow?: {
+    targetPlayerId?: string;
+    untilTick: number;
+  };
+  goalieHold?: {
+    goalieId: string;
+    teamId: TeamId;
+    releaseTick: number;
+  };
+};
+
+export type FaceoffState = {
+  spotId: string;
+  startedTick: number;
+  dropTick: number;
+  resolved: boolean;
 };
 
 export type GameState = {
   seed: number;
   tick: number;
   mode: GameMode;
+  modeStartedTick: number;
   period: number;
   clockSeconds: number;
   winnerTeamId?: TeamId;
+  faceoff?: FaceoffState;
   teams: Record<TeamId, TeamState>;
   puck: PuckState;
   events: GameEvent[];
@@ -95,8 +118,8 @@ const AWAY_START: Array<[PlayerRole, Vec2]> = [
 ];
 
 export function createInitialState(config: InitialGameConfig = {}): GameState {
-  const homeRoster = createRoster('home', HOME_START, 'home-c');
-  const awayRoster = createRoster('away', AWAY_START, 'away-c');
+  const homeRoster = createRoster('home', config.startInGameplay ? HOME_START : faceoffFormation('home'), 'home-c');
+  const awayRoster = createRoster('away', config.startInGameplay ? AWAY_START : faceoffFormation('away'), 'away-c');
   const homeCenter = homeRoster[0] as PlayerState;
   const homeControlled = homeCenter.id;
 
@@ -104,15 +127,26 @@ export function createInitialState(config: InitialGameConfig = {}): GameState {
   const initialEvents: GameEvent[] = [
     { type: 'modeChanged', mode: initialMode, tick: 0 },
     { type: 'faceoffStarted', spotId: 'center', tick: 0 },
-    { type: 'possessionChanged', playerId: homeControlled, teamId: 'home', tick: 0 },
   ];
+  if (config.startInGameplay) {
+    initialEvents.push({ type: 'possessionChanged', playerId: homeControlled, teamId: 'home', tick: 0 });
+  }
 
   return {
     seed: config.seed ?? 1,
     tick: 0,
     mode: initialMode,
+    modeStartedTick: 0,
     period: 1,
     clockSeconds: PERIOD_SECONDS,
+    faceoff: config.startInGameplay
+      ? undefined
+      : {
+          spotId: 'center',
+          startedTick: 0,
+          dropTick: FACE_OFF.countdownTicks,
+          resolved: false,
+        },
     teams: {
       home: {
         id: 'home',
@@ -124,8 +158,9 @@ export function createInitialState(config: InitialGameConfig = {}): GameState {
         goalie: {
           id: 'home-g',
           teamId: 'home',
-          position: { x: -(RINK.goalLineX - GOALIE.creaseOffset), y: 0 },
+          position: goalieCreasePosition('home', 1),
           radius: GOALIE.radius,
+          reactionAvailableTick: 0,
           intent: 'holdCrease',
         },
         controlledPlayerId: homeControlled,
@@ -139,8 +174,9 @@ export function createInitialState(config: InitialGameConfig = {}): GameState {
         goalie: {
           id: 'away-g',
           teamId: 'away',
-          position: { x: RINK.goalLineX - GOALIE.creaseOffset, y: 0 },
+          position: goalieCreasePosition('away', 1),
           radius: GOALIE.radius,
+          reactionAvailableTick: 0,
           intent: 'holdCrease',
         },
         controlledPlayerId: awayRoster[0]?.id ?? 'away-c',
@@ -149,12 +185,12 @@ export function createInitialState(config: InitialGameConfig = {}): GameState {
       },
     },
     puck: {
-      position: puckPositionForOwner(homeCenter),
+      position: config.startInGameplay ? puckPositionForOwner(homeCenter) : { x: 0, y: 0 },
       velocity: { x: 0, y: 0 },
-      ownerId: homeControlled,
-      state: 'held',
-      lastTouchPlayerId: homeControlled,
-      lastTouchTeamId: 'home',
+      ownerId: config.startInGameplay ? homeControlled : undefined,
+      state: config.startInGameplay ? 'held' : 'loose',
+      lastTouchPlayerId: config.startInGameplay ? homeControlled : undefined,
+      lastTouchTeamId: config.startInGameplay ? 'home' : undefined,
       intent: 'none',
       ageTicks: 0,
     },
@@ -196,6 +232,35 @@ export function puckPositionForOwner(owner: PlayerState): Vec2 {
   return {
     x: owner.position.x + facing.x * PUCK.stickOffset,
     y: owner.position.y + facing.y * PUCK.stickOffset,
+  };
+}
+
+export function attackingGoalX(teamId: TeamId, period: number): number {
+  const homeAttacksPositive = period % 2 === 1;
+  if (teamId === 'home') {
+    return homeAttacksPositive ? RINK.goalLineX : -RINK.goalLineX;
+  }
+  return homeAttacksPositive ? -RINK.goalLineX : RINK.goalLineX;
+}
+
+export function defendingDirectionX(teamId: TeamId, period: number): number {
+  return attackingGoalX(teamId, period) > 0 ? -1 : 1;
+}
+
+export function faceoffFormation(teamId: TeamId): Array<[PlayerRole, Vec2]> {
+  const side = teamId === 'home' ? -1 : 1;
+  return [
+    ['center', { x: side * 3, y: 0 }],
+    ['wing', { x: side * 10, y: -9 }],
+    ['defense', { x: side * 16, y: 12 }],
+  ];
+}
+
+export function goalieCreasePosition(teamId: TeamId, period: number): Vec2 {
+  const defendingGoalX = attackingGoalX(teamId === 'home' ? 'away' : 'home', period);
+  return {
+    x: defendingGoalX > 0 ? RINK.goalLineX - GOALIE.creaseOffset : -(RINK.goalLineX - GOALIE.creaseOffset),
+    y: 0,
   };
 }
 

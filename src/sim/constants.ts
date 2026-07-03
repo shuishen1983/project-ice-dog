@@ -6,6 +6,17 @@ export const TICK_SECONDS = 1 / TICK_RATE;
 export const PERIOD_COUNT = 3;
 export const PERIOD_SECONDS = 180;
 
+export const FACE_OFF = {
+  countdownTicks: 45,
+  autoResolveTicks: 90,
+  drawBackSpeed: 24,
+};
+
+export const MODE_PAUSE = {
+  goalTicks: 90,
+  periodEndTicks: 90,
+};
+
 export const RINK: RinkGeometry = {
   width: 200,
   height: 85,
@@ -32,11 +43,24 @@ export const SKATER = {
 export const GOALIE = {
   radius: 1.5,
   creaseOffset: 2,
+  saveReach: 2.2,
+  reactionCooldownTicks: 20,
+  trapSpeed: 28,
+  holdTicks: 45,
+  reboundSpeedFactor: 0.65,
 };
 
 export const PUCK = {
   radius: 1.1,
   stickOffset: 3.2,
+  pickupRadius: 3.4,
+  repossessLockoutTicks: 18,
+  pokeRange: 5,
+  frictionDecel: 18,
+  stopSpeed: 0.25,
+  boardRestitution: 0.72,
+  postRestitution: 0.48,
+  oneTimerWindowTicks: 18,
 };
 
 export const PASS = {

@@ -1,13 +1,30 @@
 import type { GameCommand } from './commands';
 import { sortCommands } from './commands';
-import { TICK_SECONDS } from './constants';
-import { integrateLoosePuck, releasePuckFromCommand, updateHeldPuck } from '../physics/puck';
+import { RINK, TICK_SECONDS } from './constants';
+import {
+  integrateLoosePuck,
+  releasePuckFromCommand,
+  releasePuckFromPokeCheck,
+  resolveGoalieHold,
+  resolveGoalieSave,
+  resolveLoosePuckPickup,
+  updateHeldPuck,
+} from '../physics/puck';
 import { integrateSkater } from '../physics/skater';
-import { applySwitchCommand, appendEvent, isCommandAllowed } from './rules';
-import type { GameState, TeamId } from './state';
-import { createRenderSnapshot } from './state';
+import { clampToRink } from '../physics/rink';
+import {
+  advanceRulesClock,
+  advanceTimedMode,
+  applySwitchCommand,
+  appendEvent,
+  isCommandAllowed,
+  resolveFaceoff,
+  resolveGoalIfNeeded,
+} from './rules';
+import type { GameState, PlayerState, TeamId } from './state';
+import { createRenderSnapshot, getPlayers } from './state';
 import type { Vec2 } from './vector';
-import { ZERO_VEC } from './vector';
+import { add, distance, normalize, scale, subtract, ZERO_VEC } from './vector';
 
 export type TickResult = {
   state: GameState;
@@ -21,6 +38,8 @@ export function advanceTick(state: GameState, commands: GameCommand[] = []): Tic
     ...state,
     tick: targetTick,
   };
+
+  nextState = advanceTimedMode(nextState);
 
   const movementByPlayer = new Map<string, Vec2>();
 
@@ -50,9 +69,30 @@ export function advanceTick(state: GameState, commands: GameCommand[] = []): Tic
           type: 'possessionChanged',
           tick: targetTick,
         });
+        nextState = appendEvent(nextState, {
+          type: 'puckReleased',
+          playerId: command.playerId,
+          tick: targetTick,
+        });
+      }
+    }
+
+    if (command.type === 'pokeCheck') {
+      const releasedPuck = releasePuckFromPokeCheck(nextState, command);
+      if (releasedPuck) {
+        nextState = {
+          ...nextState,
+          puck: releasedPuck,
+        };
+        nextState = appendEvent(nextState, {
+          type: 'possessionChanged',
+          tick: targetTick,
+        });
       }
     }
   }
+
+  nextState = resolveFaceoff(nextState, tickCommands);
 
   nextState = {
     ...nextState,
@@ -62,6 +102,9 @@ export function advanceTick(state: GameState, commands: GameCommand[] = []): Tic
     },
   };
 
+  nextState = separateSkaterContacts(nextState);
+  nextState = resolveGoalieHold(nextState);
+
   nextState = {
     ...nextState,
     puck:
@@ -69,6 +112,11 @@ export function advanceTick(state: GameState, commands: GameCommand[] = []): Tic
         ? updateHeldPuck(nextState)
         : integrateLoosePuck(nextState.puck),
   };
+
+  nextState = resolveGoalieSave(nextState);
+  nextState = resolveLoosePuckPickup(nextState);
+  nextState = resolveGoalIfNeeded(nextState);
+  nextState = advanceRulesClock(nextState);
 
   return { state: nextState };
 }
@@ -120,5 +168,43 @@ function integrateTeamSkaters(state: GameState, teamId: TeamId, movementByPlayer
     roster: team.roster.map((player) =>
       integrateSkater(player, movementByPlayer.get(player.id) ?? ZERO_VEC, state.puck.ownerId === player.id),
     ),
+  };
+}
+
+function separateSkaterContacts(state: GameState): GameState {
+  const players = getPlayers(state)
+    .map((player) => ({ ...player }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  for (let i = 0; i < players.length; i += 1) {
+    for (let j = i + 1; j < players.length; j += 1) {
+      const first = players[i] as PlayerState;
+      const second = players[j] as PlayerState;
+      const minimumDistance = first.radius + second.radius;
+      const currentDistance = distance(first.position, second.position);
+      if (currentDistance >= minimumDistance) {
+        continue;
+      }
+
+      const direction = currentDistance === 0 ? { x: first.id.localeCompare(second.id) <= 0 ? -1 : 1, y: 0 } : normalize(subtract(first.position, second.position));
+      const correction = scale(direction, (minimumDistance - currentDistance) / 2);
+      first.position = clampToRink(add(first.position, correction), RINK, first.radius);
+      second.position = clampToRink(add(second.position, scale(correction, -1)), RINK, second.radius);
+    }
+  }
+
+  const byId = new Map(players.map((player) => [player.id, player]));
+  return {
+    ...state,
+    teams: {
+      home: {
+        ...state.teams.home,
+        roster: state.teams.home.roster.map((player) => byId.get(player.id) ?? player),
+      },
+      away: {
+        ...state.teams.away,
+        roster: state.teams.away.roster.map((player) => byId.get(player.id) ?? player),
+      },
+    },
   };
 }
