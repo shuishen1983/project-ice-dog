@@ -52,6 +52,42 @@ describe('Pass 3 team AI and goalie behavior', () => {
     expect(after.teams.home.goalie.position.y).toBeGreaterThan(before);
   });
 
+  it('challenges forward within the crease as the shooter approaches', () => {
+    let state = createInitialState({ seed: 1, startInGameplay: true, enableAi: true });
+    state = {
+      ...state,
+      puck: { ...state.puck, position: { x: -70, y: 0 }, ownerId: undefined, state: 'loose' as const },
+    };
+
+    for (let i = 0; i < 240; i += 1) {
+      state = updateGoaliePositions(state);
+    }
+
+    const goalie = state.teams.home.goalie;
+    const anchorX = -(RINK.goalLineX - 2);
+    expect(goalie.position.x).toBeGreaterThan(anchorX);
+    const fromGoal = Math.hypot(goalie.position.x + RINK.goalLineX, goalie.position.y);
+    expect(fromGoal).toBeLessThanOrEqual(RINK.creaseRadius - goalie.radius + 1e-6);
+  });
+
+  it('retreats to hug the near post when the puck is behind the goal', () => {
+    let state = createInitialState({ seed: 1, startInGameplay: true, enableAi: true });
+    state = {
+      ...state,
+      puck: { ...state.puck, position: { x: -95, y: 8 }, ownerId: undefined, state: 'loose' as const },
+    };
+
+    for (let i = 0; i < 240; i += 1) {
+      state = updateGoaliePositions(state);
+    }
+
+    const goalie = state.teams.home.goalie;
+    expect(goalie.position.x).toBeGreaterThanOrEqual(-RINK.goalLineX);
+    expect(goalie.position.x).toBeLessThan(-RINK.goalLineX + 3);
+    expect(goalie.position.y).toBeGreaterThan(0);
+    expect(goalie.position.y).toBeLessThanOrEqual(RINK.goalMouthWidth / 2 + 1e-6);
+  });
+
   it('creates deterministic AI faceoff swipe commands', () => {
     const state = createInitialState({ seed: 11, enableAi: true });
     const tick = FACE_OFF.countdownTicks + 12;

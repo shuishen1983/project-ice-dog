@@ -4,14 +4,14 @@ import type { GameState, GoalieState, PlayerState, TeamId } from '../sim/state';
 import { attackingGoalX, findPlayer, goalieCreasePosition } from '../sim/state';
 import { add, distance, length, normalize, scale, subtract } from '../sim/vector';
 import type { Vec2 } from '../sim/vector';
-import { clampToRink } from '../physics/rink';
+import { clampToCrease, clampToRink } from '../physics/rink';
 
 const SUPPORT_FORWARD_OFFSET = 18;
 const SUPPORT_WIDE_OFFSET = 14;
 const PRESSURE_RADIUS = 13;
 const SHOT_RANGE = 58;
 const LANE_BLOCK_RADIUS = 7;
-const GOALIE_LATERAL_SPEED = 18;
+const GOALIE_MOVE_SPEED = 18;
 
 export function createAiCommands(state: GameState, tick: number): GameCommand[] {
   if (!state.aiEnabled) {
@@ -175,19 +175,32 @@ function moveCommand(player: PlayerState, target: Vec2, tick: number): GameComma
 
 function moveGoalie(state: GameState, goalie: GoalieState): GoalieState {
   const crease = goalieCreasePosition(goalie.teamId, state.period);
-  const threatDistance = Math.abs(state.puck.position.x - crease.x);
-  const tracksPuck = threatDistance < 80;
-  const targetY = tracksPuck
-    ? Math.max(-RINK.creaseRadius, Math.min(RINK.creaseRadius, state.puck.position.y))
-    : 0;
-  const target = { x: crease.x, y: targetY };
-  const delta = subtract(target, goalie.position);
-  const maxStep = GOALIE_LATERAL_SPEED * TICK_SECONDS;
+  const goalCenter = { x: crease.x > 0 ? RINK.goalLineX : -RINK.goalLineX, y: 0 };
+  const inwardX = goalCenter.x > 0 ? -1 : 1;
+  const puck = state.puck.position;
+  const puckInFront = inwardX > 0 ? puck.x >= goalCenter.x : puck.x <= goalCenter.x;
+
+  let target: Vec2;
+  if (!puckInFront) {
+    const postY = Math.max(-RINK.goalMouthWidth / 2, Math.min(RINK.goalMouthWidth / 2, puck.y));
+    target = { x: goalCenter.x + inwardX * goalie.radius, y: postY };
+  } else {
+    const threat = distance(puck, goalCenter);
+    const maxDepth = RINK.creaseRadius - goalie.radius;
+    const closeness = Math.max(0, 1 - threat / GOALIE.challengeRange);
+    const depth = Math.min(maxDepth, GOALIE.creaseOffset + (maxDepth - GOALIE.creaseOffset) * closeness);
+    const outDirection = threat > 1e-9 ? scale(subtract(puck, goalCenter), 1 / threat) : { x: inwardX, y: 0 };
+    target = add(goalCenter, scale(outDirection, depth));
+  }
+
+  const clampedTarget = clampToCrease(target, RINK, goalCenter.x, goalie.radius);
+  const delta = subtract(clampedTarget, goalie.position);
+  const maxStep = GOALIE_MOVE_SPEED * TICK_SECONDS;
   const step = length(delta) <= maxStep ? delta : scale(normalize(delta), maxStep);
 
   return {
     ...goalie,
-    position: add(goalie.position, step),
+    position: clampToCrease(add(goalie.position, step), RINK, goalCenter.x, goalie.radius),
   };
 }
 

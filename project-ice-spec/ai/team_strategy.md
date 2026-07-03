@@ -52,6 +52,9 @@ Priority order:
 ## Goalie Behavior
 - Stay near crease center when puck is low threat.
 - Square to puck position when threat rises.
+- Move in depth as well as laterally: challenge forward along the goal-to-puck line as the threat approaches, and drop back toward the goal line as it recedes.
+- When the puck is behind the goal line, retreat to the goal line and hug the post nearest the puck.
+- Goalie movement is constrained to the crease region in MVP; the crease semicircle is both the AI boundary and a rendered rink marking.
 - Attempt save when puck path intersects goal mouth.
 - Trap low-speed pucks near crease when possible.
 - Emit rebound when a save does not trap the puck.

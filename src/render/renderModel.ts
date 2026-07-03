@@ -6,6 +6,7 @@ export type RenderElementKind =
   | 'centerLine'
   | 'blueLine'
   | 'goalMouth'
+  | 'crease'
   | 'skater'
   | 'skaterFacing'
   | 'selectedPlayer'
@@ -31,6 +32,8 @@ export function buildRenderModel(snapshot: RenderSnapshot): RenderElement[] {
     { kind: 'blueLine', id: 'blue-line-away' },
     { kind: 'goalMouth', id: 'goal-home' },
     { kind: 'goalMouth', id: 'goal-away' },
+    { kind: 'crease', id: 'crease-home' },
+    { kind: 'crease', id: 'crease-away' },
     { kind: 'puck', id: 'puck' },
     { kind: 'score', id: 'score' },
     { kind: 'periodClock', id: 'period-clock' },

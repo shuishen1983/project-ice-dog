@@ -16,3 +16,4 @@ DEC-013 Accepted: Goalie traps release the puck to a defender after a fixed hold
 DEC-014 Accepted: Keyboard-first input with facing-based aiming; mouse and gamepad support deferred.
 DEC-015 Accepted: No body checking in MVP; poke check is the only defensive stick action.
 DEC-016 Accepted: Rink geometry is NHL-proportional at 200 by 85 rink units with one unit per foot.
+DEC-017 Accepted: Goalie movement is constrained to the crease semicircle in MVP; depth and lateral positioning are deterministic functions of puck position.

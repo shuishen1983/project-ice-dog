@@ -14,6 +14,7 @@ describe('Pass 4 render smoke model', () => {
     expect(kinds).toContain('centerLine');
     expect(kinds.filter((kind) => kind === 'blueLine')).toHaveLength(2);
     expect(kinds.filter((kind) => kind === 'goalMouth')).toHaveLength(2);
+    expect(kinds.filter((kind) => kind === 'crease')).toHaveLength(2);
     expect(kinds.filter((kind) => kind === 'skater')).toHaveLength(6);
     expect(kinds.filter((kind) => kind === 'goalie')).toHaveLength(2);
     expect(kinds).toContain('puck');

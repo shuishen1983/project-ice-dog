@@ -46,6 +46,27 @@ export function cornerArcAt(position: Vec2, rink: RinkGeometry, margin = 0): Cor
   };
 }
 
+export function clampToCrease(position: Vec2, rink: RinkGeometry, goalX: number, margin = 0): Vec2 {
+  const maxRadius = Math.max(0, rink.creaseRadius - margin);
+  let x = position.x;
+  let y = position.y;
+
+  const offsetX = x - goalX;
+  const offsetY = y;
+  const separation = Math.hypot(offsetX, offsetY);
+  if (separation > maxRadius && separation > 0) {
+    x = goalX + (offsetX / separation) * maxRadius;
+    y = (offsetY / separation) * maxRadius;
+  }
+
+  const inwardX = goalX > 0 ? -1 : 1;
+  if (inwardX > 0 ? x < goalX : x > goalX) {
+    x = goalX;
+  }
+
+  return { x, y };
+}
+
 export function clampToRink(position: Vec2, rink: RinkGeometry, margin = 0): Vec2 {
   const halfWidth = rink.width / 2 - margin;
   const halfHeight = rink.height / 2 - margin;

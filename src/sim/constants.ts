@@ -43,6 +43,7 @@ export const SKATER = {
 export const GOALIE = {
   radius: 1.5,
   creaseOffset: 2,
+  challengeRange: 45,
   saveReach: 2.2,
   reactionCooldownTicks: 20,
   trapSpeed: 28,

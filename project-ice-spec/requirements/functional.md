@@ -32,6 +32,7 @@
 - FR-023 Defensive AI prioritizes protecting the slot over chasing low-threat puck positions.
 - FR-024 AI can choose pass, shot, dump, retrieval, and rebound-recovery intents.
 - FR-025 Difficulty levels may tune reaction delay and prediction depth, but must not change core rules.
+- FR-040 Goalies move forward, backward, and laterally within the crease: challenging toward the puck as threat rises, and hugging the near post when the puck is behind the goal line.
 
 ## Presentation And Input
 - FR-026 Display rink, boards, goals, skaters, goalies, puck, score, period, clock, and selected skater.

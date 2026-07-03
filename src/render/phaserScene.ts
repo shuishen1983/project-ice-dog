@@ -123,6 +123,19 @@ export class IceScene extends Phaser.Scene {
     this.graphics.lineBetween(toScreenX(-rink.blueLineX), top, toScreenX(-rink.blueLineX), top + height);
     this.graphics.lineBetween(toScreenX(rink.blueLineX), top, toScreenX(rink.blueLineX), top + height);
 
+    const creaseRadius = rink.creaseRadius * SCALE;
+    for (const sign of [-1, 1] as const) {
+      const goalScreenX = toScreenX(sign * rink.goalLineX);
+      const startAngle = sign === -1 ? -Math.PI / 2 : Math.PI / 2;
+      const endAngle = sign === -1 ? Math.PI / 2 : Math.PI * 1.5;
+      this.graphics.fillStyle(0x9fd4f5, 0.45);
+      this.graphics.slice(goalScreenX, CENTER_Y, creaseRadius, startAngle, endAngle, false);
+      this.graphics.fillPath();
+      this.graphics.lineStyle(2, 0xc83333, 0.9);
+      this.graphics.slice(goalScreenX, CENTER_Y, creaseRadius, startAngle, endAngle, false);
+      this.graphics.strokePath();
+    }
+
     const goalMouthHalf = (rink.goalMouthWidth / 2) * SCALE;
     this.graphics.lineStyle(2, 0xc83333, 0.8);
     this.graphics.lineBetween(toScreenX(-rink.goalLineX), top, toScreenX(-rink.goalLineX), top + height);
