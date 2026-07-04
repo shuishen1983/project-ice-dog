@@ -20,28 +20,28 @@ export class Hud {
       fontSize: '20px',
       fontStyle: '700',
     });
-    this.awayScoreText = scene.add.text(140, 16, '', {
+    this.awayScoreText = scene.add.text(120, 16, '', {
       color: TEAM_COLORS.away.hud,
       fontFamily: 'Inter, Arial, sans-serif',
       fontSize: '20px',
       fontStyle: '700',
     });
-    this.clockText = scene.add.text(460, 16, '', {
-      color: '#10202f',
+    this.clockText = scene.add.text(258, 16, '', {
+      color: '#dcecf7',
       fontFamily: 'Inter, Arial, sans-serif',
       fontSize: '20px',
       fontStyle: '700',
     });
-    this.possessionText = scene.add.text(760, 18, '', {
+    this.possessionText = scene.add.text(570, 14, '', {
       color: '#31485c',
       fontFamily: 'Inter, Arial, sans-serif',
-      fontSize: '15px',
+      fontSize: '17px',
       fontStyle: '700',
     });
-    this.boostText = scene.add.text(760, 40, '', {
+    this.boostText = scene.add.text(570, 36, '', {
       color: '#177a8c',
       fontFamily: 'Inter, Arial, sans-serif',
-      fontSize: '15px',
+      fontSize: '17px',
       fontStyle: '700',
     });
     this.homeScoreText.setDepth(10);

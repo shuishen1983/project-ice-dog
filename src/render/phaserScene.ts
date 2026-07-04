@@ -47,9 +47,9 @@ export class IceScene extends Phaser.Scene {
   }
 
   private createMenu(): Phaser.GameObjects.Container {
-    const background = this.add.rectangle(550, 320, 460, 200, 0x10202f, 0.92);
+    const background = this.add.rectangle(550, 320, 460, 240, 0x10202f, 0.92);
     background.setStrokeStyle(2, 0xdcecf7, 1);
-    const title = this.add.text(550, 275, 'PROJECT ICE', {
+    const title = this.add.text(550, 258, 'PROJECT ICE', {
       align: 'center',
       color: '#eaf8ff',
       fontFamily: 'Inter, Arial, sans-serif',
@@ -59,26 +59,35 @@ export class IceScene extends Phaser.Scene {
     title.setOrigin(0.5, 0.5);
 
     const options: Array<[MatchType, string, number]> = [
-      ['regulation', '1 — Regulation (3 periods)', 330],
-      ['shootout', '2 — Shootout (best of 5)', 372],
+      ['regulation', '1 — Regulation (3 periods)', 318],
+      ['shootout', '2 — Shootout (best of 5)', 374],
     ];
-    const optionTexts = options.map(([matchType, label, y]) => {
-      const option = this.add.text(550, y, label, {
+
+    const optionObjects: Phaser.GameObjects.GameObject[] = [];
+    for (const [matchType, label, y] of options) {
+      const btnBg = this.add.rectangle(550, y, 340, 44, 0x1a3040, 0.75);
+      btnBg.setStrokeStyle(1.5, 0x6a9ab8, 0.6);
+      btnBg.setInteractive({ useHandCursor: true });
+      btnBg.on('pointerover', () => btnBg.setFillStyle(0x2a4f6e, 0.9));
+      btnBg.on('pointerout', () => btnBg.setFillStyle(0x1a3040, 0.75));
+      btnBg.on('pointerdown', () => {
+        btnBg.setFillStyle(0x0e2030, 0.95);
+        this.menuSelection = matchType;
+      });
+      btnBg.on('pointerup', () => btnBg.setFillStyle(0x2a4f6e, 0.9));
+
+      const optText = this.add.text(550, y, label, {
         align: 'center',
         color: '#eaf8ff',
         fontFamily: 'Inter, Arial, sans-serif',
-        fontSize: '20px',
+        fontSize: '18px',
         fontStyle: '700',
       });
-      option.setOrigin(0.5, 0.5);
-      option.setInteractive({ useHandCursor: true });
-      option.on('pointerdown', () => {
-        this.menuSelection = matchType;
-      });
-      return option;
-    });
+      optText.setOrigin(0.5, 0.5);
+      optionObjects.push(btnBg, optText);
+    }
 
-    const container = this.add.container(0, 0, [background, title, ...optionTexts]);
+    const container = this.add.container(0, 0, [background, title, ...optionObjects]);
     container.setDepth(30);
     return container;
   }

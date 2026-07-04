@@ -15,11 +15,12 @@ type ButtonDef = {
   x: number;
   y: number;
   radius: number;
+  primary?: boolean;
 };
 
 const BUTTONS: ButtonDef[] = [
-  { key: 'shoot', label: 'SHOOT', x: 1005, y: 550, radius: 44 },
-  { key: 'pass', label: 'PASS', x: 900, y: 590, radius: 36 },
+  { key: 'shoot', label: 'SHOOT', x: 1005, y: 550, radius: 44, primary: true },
+  { key: 'pass', label: 'PASS', x: 900, y: 590, radius: 36, primary: true },
   { key: 'poke', label: 'POKE', x: 905, y: 495, radius: 34 },
   { key: 'boost', label: 'BOOST', x: 1005, y: 448, radius: 34 },
   { key: 'switchPlayer', label: 'SWAP', x: 795, y: 590, radius: 32 },
@@ -62,15 +63,19 @@ export class TouchControls {
     this.knob.setVisible(false);
 
     for (const def of BUTTONS) {
-      const button = scene.add.circle(def.x, def.y, def.radius, 0x10202f, 0.28);
-      button.setStrokeStyle(2, 0x31485c, 0.7);
+      const button = scene.add.circle(
+        def.x, def.y, def.radius,
+        def.primary ? 0x1a3040 : 0x10202f,
+        def.primary ? 0.42 : 0.22,
+      );
+      button.setStrokeStyle(2, def.primary ? 0x7ab8dc : 0x31485c, def.primary ? 0.85 : 0.5);
       button.setDepth(40);
       button.setInteractive({ useHandCursor: false });
       button.on('pointerdown', () => {
         this.pressed[def.key] = true;
       });
       const label = scene.add.text(def.x, def.y, def.label, {
-        color: '#dcecf7',
+        color: def.primary ? '#dcecf7' : '#8aa8bc',
         fontFamily: 'Inter, Arial, sans-serif',
         fontSize: def.radius >= 40 ? '16px' : '13px',
         fontStyle: '700',
