@@ -5,6 +5,7 @@ import { createInitialState, type RenderSnapshot } from '../sim/state';
 import { ControlsHelp } from './controlsHelp';
 import { DebugOverlay } from './debugOverlay';
 import { Hud } from './hud';
+import { TEAM_COLORS } from './teamColors';
 
 const SCALE = 5;
 const CENTER_X = 550;
@@ -151,7 +152,7 @@ export class IceScene extends Phaser.Scene {
       const hasPuck = player.id === snapshot.puck.ownerId;
       const screenX = toScreenX(player.position.x);
       const screenY = toScreenY(player.position.y);
-      this.graphics.fillStyle(player.teamId === 'home' ? 0x0f6bdc : 0xd63d32, 1);
+      this.graphics.fillStyle(TEAM_COLORS[player.teamId].skater, 1);
       this.graphics.fillCircle(screenX, screenY, player.radius * SCALE);
 
       if (hasPuck) {
@@ -175,7 +176,7 @@ export class IceScene extends Phaser.Scene {
     }
 
     for (const goalie of snapshot.goalies) {
-      this.graphics.fillStyle(goalie.teamId === 'home' ? 0x0b3f86 : 0x8f231c, 1);
+      this.graphics.fillStyle(TEAM_COLORS[goalie.teamId].goalie, 1);
       this.graphics.fillRect(
         toScreenX(goalie.position.x) - goalie.radius * SCALE,
         toScreenY(goalie.position.y) - goalie.radius * SCALE,

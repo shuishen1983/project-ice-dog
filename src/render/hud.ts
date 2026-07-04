@@ -1,14 +1,22 @@
 import Phaser from 'phaser';
 import type { RenderSnapshot } from '../sim/state';
+import { TEAM_COLORS } from './teamColors';
 
 export class Hud {
-  private readonly scoreText: Phaser.GameObjects.Text;
+  private readonly homeScoreText: Phaser.GameObjects.Text;
+  private readonly awayScoreText: Phaser.GameObjects.Text;
   private readonly clockText: Phaser.GameObjects.Text;
   private readonly possessionText: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
-    this.scoreText = scene.add.text(24, 16, '', {
-      color: '#10202f',
+    this.homeScoreText = scene.add.text(24, 16, '', {
+      color: TEAM_COLORS.home.hud,
+      fontFamily: 'Inter, Arial, sans-serif',
+      fontSize: '20px',
+      fontStyle: '700',
+    });
+    this.awayScoreText = scene.add.text(140, 16, '', {
+      color: TEAM_COLORS.away.hud,
       fontFamily: 'Inter, Arial, sans-serif',
       fontSize: '20px',
       fontStyle: '700',
@@ -25,7 +33,8 @@ export class Hud {
       fontSize: '15px',
       fontStyle: '700',
     });
-    this.scoreText.setDepth(10);
+    this.homeScoreText.setDepth(10);
+    this.awayScoreText.setDepth(10);
     this.clockText.setDepth(10);
     this.possessionText.setDepth(10);
   }
@@ -38,7 +47,8 @@ export class Hud {
     const possession = snapshot.puck.ownerId
       ? `PUCK ${snapshot.puck.ownerId.toUpperCase()}`
       : `PUCK ${snapshot.puck.intent.toUpperCase()}`;
-    this.scoreText.setText(`HOME ${snapshot.score.home}  AWAY ${snapshot.score.away}`);
+    this.homeScoreText.setText(`HOME ${snapshot.score.home}`);
+    this.awayScoreText.setText(`AWAY ${snapshot.score.away}`);
     this.clockText.setText(`P${snapshot.period}  ${minutes}:${seconds}  ${snapshot.mode}`);
     this.possessionText.setText(possession);
   }

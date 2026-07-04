@@ -17,3 +17,4 @@ DEC-014 Accepted: Keyboard-first input with facing-based aiming; mouse and gamep
 DEC-015 Accepted: No body checking in MVP; poke check is the only defensive stick action.
 DEC-016 Accepted: Rink geometry is NHL-proportional at 200 by 85 rink units with one unit per foot.
 DEC-017 Accepted: Goalie movement is constrained to the crease semicircle in MVP; depth and lateral positioning are deterministic functions of puck position.
+DEC-018 Accepted: Team colors are fixed and shared across all presentation surfaces: home is blue (#0f6bdc) and away is red (#d63d32); the HUD scoreboard renders each team's label and score in that team's color so the score visibly maps to the players on the ice.
