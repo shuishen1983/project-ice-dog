@@ -15,6 +15,7 @@ export class IceScene extends Phaser.Scene {
   private simulation!: FixedStepSimulation;
   private graphics!: Phaser.GameObjects.Graphics;
   private hud!: Hud;
+  private menu!: Phaser.GameObjects.Container;
   private debugOverlay!: DebugOverlay;
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys?: Record<string, Phaser.Input.Keyboard.Key>;
@@ -24,16 +25,35 @@ export class IceScene extends Phaser.Scene {
   }
 
   create() {
-    this.simulation = new FixedStepSimulation(createInitialState({ seed: 1, startInGameplay: true, enableAi: true }));
+    this.simulation = new FixedStepSimulation(createInitialState({ seed: 1, startInMenu: true, enableAi: true }));
     this.graphics = this.add.graphics();
     this.hud = new Hud(this);
     this.debugOverlay = new DebugOverlay(this);
     new ControlsHelp(this);
+    this.menu = this.createMenu();
     this.cursors = this.input.keyboard?.createCursorKeys();
-    this.keys = this.input.keyboard?.addKeys('W,A,S,D,J,K,L,Z,X,C,SPACE') as Record<
+    this.keys = this.input.keyboard?.addKeys('W,A,S,D,J,K,L,Z,X,C,SPACE,ONE,TWO') as Record<
       string,
       Phaser.Input.Keyboard.Key
     >;
+    // Dev/test hook: lets headless drivers inspect the live simulation.
+    (window as unknown as { iceScene?: IceScene }).iceScene = this;
+  }
+
+  private createMenu(): Phaser.GameObjects.Container {
+    const background = this.add.rectangle(550, 320, 460, 200, 0x10202f, 0.92);
+    background.setStrokeStyle(2, 0xdcecf7, 1);
+    const text = this.add.text(550, 320, 'PROJECT ICE\n\n1 — Regulation (3 periods)\n2 — Shootout (best of 5)', {
+      align: 'center',
+      color: '#eaf8ff',
+      fontFamily: 'Inter, Arial, sans-serif',
+      fontSize: '20px',
+      fontStyle: '700',
+    });
+    text.setOrigin(0.5, 0.5);
+    const container = this.add.container(0, 0, [background, text]);
+    container.setDepth(30);
+    return container;
   }
 
   update(_time: number, deltaMs: number) {
@@ -45,6 +65,17 @@ export class IceScene extends Phaser.Scene {
     const snapshot = this.simulation.snapshot;
     const selectedPlayerId = snapshot.selectedPlayerId;
     const commands: GameCommand[] = [];
+
+    if (snapshot.mode === 'Menu') {
+      if (justDown(this.keys?.ONE)) {
+        commands.push({ type: 'startMatch' as const, matchType: 'regulation' as const, tick });
+      }
+      if (justDown(this.keys?.TWO)) {
+        commands.push({ type: 'startMatch' as const, matchType: 'shootout' as const, tick });
+      }
+      return commands;
+    }
+
     if (!selectedPlayerId) {
       return commands;
     }
@@ -99,6 +130,7 @@ export class IceScene extends Phaser.Scene {
     this.drawPuck(snapshot);
     this.hud.render(snapshot);
     this.debugOverlay.render(snapshot);
+    this.menu.setVisible(snapshot.mode === 'Menu');
   }
 
   private drawRink(snapshot: RenderSnapshot) {

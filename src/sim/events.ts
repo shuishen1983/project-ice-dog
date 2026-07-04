@@ -7,4 +7,7 @@ export type GameEvent =
   | { type: 'goalieSave'; goalieId: string; trapped: boolean; tick: number }
   | { type: 'goal'; teamId: string; scorerId?: string; tick: number }
   | { type: 'periodEnded'; period: number; tick: number }
+  | { type: 'matchStarted'; matchType: string; tick: number }
+  | { type: 'attemptStarted'; round: number; teamId: string; playerId: string; tick: number }
+  | { type: 'attemptEnded'; round: number; teamId: string; scored: boolean; tick: number }
   | { type: 'gameEnded'; winnerTeamId?: string; tick: number };

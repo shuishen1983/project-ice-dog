@@ -5,7 +5,8 @@ import { normalize } from './vector';
 
 export type TeamId = 'home' | 'away';
 export type PlayerRole = 'center' | 'wing' | 'defense';
-export type GameMode = 'Boot' | 'Menu' | 'Faceoff' | 'Gameplay' | 'Goal' | 'PeriodEnd' | 'GameEnd';
+export type MatchType = 'regulation' | 'shootout';
+export type GameMode = 'Boot' | 'Menu' | 'Faceoff' | 'Gameplay' | 'Goal' | 'PeriodEnd' | 'AttemptSetup' | 'AttemptEnd' | 'GameEnd';
 export type PuckIntent = 'none' | 'pass' | 'shot' | 'dump' | 'rebound' | 'loose';
 
 export type PlayerState = {
@@ -71,6 +72,13 @@ export type FaceoffState = {
   resolved: boolean;
 };
 
+export type ShootoutState = {
+  round: number;
+  shooterTeamId: TeamId;
+  shooterPlayerId: string;
+  attempts: Record<TeamId, number>;
+};
+
 export type GameState = {
   seed: number;
   aiEnabled: boolean;
@@ -78,11 +86,13 @@ export type GameState = {
   tick: number;
   mode: GameMode;
   modeStartedTick: number;
+  matchType: MatchType;
   period: number;
   periodSeconds: number;
   clockSeconds: number;
   winnerTeamId?: TeamId;
   faceoff?: FaceoffState;
+  shootout?: ShootoutState;
   teams: Record<TeamId, TeamState>;
   puck: PuckState;
   events: GameEvent[];
@@ -94,6 +104,8 @@ export type RenderSnapshot = {
   aiEnabled: boolean;
   tick: number;
   mode: GameMode;
+  matchType: MatchType;
+  shootout?: ShootoutState;
   period: number;
   clockSeconds: number;
   score: Record<TeamId, number>;
@@ -109,6 +121,7 @@ export type RenderSnapshot = {
 export type InitialGameConfig = {
   seed?: number;
   startInGameplay?: boolean;
+  startInMenu?: boolean;
   enableAi?: boolean;
   humanTeamId?: TeamId | null;
   periodSeconds?: number;
@@ -134,11 +147,11 @@ export function createInitialState(config: InitialGameConfig = {}): GameState {
   const homeCenter = homeRoster[0] as PlayerState;
   const homeControlled = homeCenter.id;
 
-  const initialMode: GameMode = config.startInGameplay ? 'Gameplay' : 'Faceoff';
-  const initialEvents: GameEvent[] = [
-    { type: 'modeChanged', mode: initialMode, tick: 0 },
-    { type: 'faceoffStarted', spotId: 'center', tick: 0 },
-  ];
+  const initialMode: GameMode = config.startInMenu ? 'Menu' : config.startInGameplay ? 'Gameplay' : 'Faceoff';
+  const initialEvents: GameEvent[] = [{ type: 'modeChanged', mode: initialMode, tick: 0 }];
+  if (initialMode !== 'Menu') {
+    initialEvents.push({ type: 'faceoffStarted', spotId: 'center', tick: 0 });
+  }
   if (config.startInGameplay) {
     initialEvents.push({ type: 'possessionChanged', playerId: homeControlled, teamId: 'home', tick: 0 });
   }
@@ -150,10 +163,11 @@ export function createInitialState(config: InitialGameConfig = {}): GameState {
     tick: 0,
     mode: initialMode,
     modeStartedTick: 0,
+    matchType: 'regulation',
     period: 1,
     periodSeconds,
     clockSeconds: periodSeconds,
-    faceoff: config.startInGameplay
+    faceoff: config.startInGameplay || config.startInMenu
       ? undefined
       : {
           spotId: 'center',
@@ -220,6 +234,8 @@ export function createRenderSnapshot(state: GameState): RenderSnapshot {
     aiEnabled: state.aiEnabled,
     tick: state.tick,
     mode: state.mode,
+    matchType: state.matchType,
+    shootout: state.shootout,
     period: state.period,
     clockSeconds: state.clockSeconds,
     score: {

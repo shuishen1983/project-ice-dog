@@ -15,6 +15,16 @@ export const FACE_OFF = {
 export const MODE_PAUSE = {
   goalTicks: 90,
   periodEndTicks: 90,
+  attemptEndTicks: 90,
+};
+
+export const SHOOTOUT = {
+  rounds: 5,
+  attemptSeconds: 15,
+  setupTicks: 45,
+  parkedLineY: 38.5,
+  parkedBaseX: 70,
+  parkedSpacingX: 6,
 };
 
 export const RINK: RinkGeometry = {

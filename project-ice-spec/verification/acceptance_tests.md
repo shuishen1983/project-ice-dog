@@ -97,6 +97,37 @@ Acceptance tests should exercise simulation behavior through public commands and
   - When each runs to `GameEnd`
   - Then no tick throws and every game produces a final score.
 
+## Match Types And Shootout
+- AT-020 Menu starts the selected match type.
+  - Given a game in `Menu` mode
+  - When a `startMatch` command with a match type is accepted
+  - Then the game enters `Faceoff` for regulation or `AttemptSetup` for shootout, and the choice is reproducible from the command log.
+
+- AT-021 Shootout attempt setup isolates shooter and goalie.
+  - Given a shootout attempt begins
+  - When `AttemptSetup` completes
+  - Then the shooter holds the puck at center ice, the defending goalie is in its crease, and every other skater is parked and possession-ineligible.
+
+- AT-022 Attempt ends without a goal and no score is awarded.
+  - Given an attempt where the goalie traps the puck, the puck dies behind the goal line, or the attempt timer expires
+  - When the attempt resolves
+  - Then no score changes, the attempt is recorded, and the next attempt (or `GameEnd`) begins.
+
+- AT-023 Attempts alternate and rounds advance.
+  - Given a shootout in progress
+  - When consecutive attempts resolve
+  - Then shooters alternate home/away and the round increments after each away attempt.
+
+- AT-024 Shootout clinch ends the game early.
+  - Given one team's lead exceeds the other team's remaining attempts within the first five rounds
+  - When the attempt resolves
+  - Then `GameEnd` is entered with that team as winner without playing the remaining attempts.
+
+- AT-025 Sudden death decides a tied shootout.
+  - Given the score is tied after five rounds
+  - When a sudden-death round ends with exactly one team scoring
+  - Then that team wins and `GameEnd` is entered; tied sudden-death rounds continue.
+
 ## Presentation Smoke Tests
 - AT-016 Required HUD and rink elements render.
   - Given the browser game starts

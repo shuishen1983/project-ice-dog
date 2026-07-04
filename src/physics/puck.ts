@@ -427,6 +427,8 @@ function reboundPuck(state: GameState, goalie: GoalieState): PuckState {
     ageTicks: 0,
     receiveWindow: undefined,
     goalieHold: undefined,
+    // Shootout: the shooter may play their own rebound immediately (DEC-021).
+    repossessLockout: state.matchType === 'shootout' ? undefined : state.puck.repossessLockout,
   };
 }
 

@@ -49,7 +49,12 @@ export class Hud {
       : `PUCK ${snapshot.puck.intent.toUpperCase()}`;
     this.homeScoreText.setText(`HOME ${snapshot.score.home}`);
     this.awayScoreText.setText(`AWAY ${snapshot.score.away}`);
-    this.clockText.setText(`P${snapshot.period}  ${minutes}:${seconds}  ${snapshot.mode}`);
+    if (snapshot.matchType === 'shootout' && snapshot.shootout) {
+      const shooter = snapshot.shootout.shooterTeamId.toUpperCase();
+      this.clockText.setText(`SO R${snapshot.shootout.round} ${shooter}  ${minutes}:${seconds}  ${snapshot.mode}`);
+    } else {
+      this.clockText.setText(`P${snapshot.period}  ${minutes}:${seconds}  ${snapshot.mode}`);
+    }
     this.possessionText.setText(possession);
   }
 }

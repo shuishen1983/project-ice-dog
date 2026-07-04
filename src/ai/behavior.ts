@@ -12,10 +12,15 @@ const PRESSURE_RADIUS = 13;
 const SHOT_RANGE = 58;
 const LANE_BLOCK_RADIUS = 7;
 const GOALIE_MOVE_SPEED = 18;
+const SHOOTOUT_SHOT_RANGE = 20;
 
 export function createAiCommands(state: GameState, tick: number): GameCommand[] {
   if (!state.aiEnabled) {
     return [];
+  }
+
+  if (state.matchType === 'shootout') {
+    return createShootoutCommands(state, tick);
   }
 
   if (state.mode === 'Faceoff') {
@@ -31,6 +36,37 @@ export function createAiCommands(state: GameState, tick: number): GameCommand[] 
     commands.push(...createTeamCommands(state, teamId, tick));
   }
   return commands;
+}
+
+function createShootoutCommands(state: GameState, tick: number): GameCommand[] {
+  if (state.mode !== 'Gameplay' || !state.shootout) {
+    return [];
+  }
+
+  const shooter = findPlayer(state, state.shootout.shooterPlayerId);
+  if (!shooter || isHumanControlled(state, shooter)) {
+    return [];
+  }
+
+  if (state.puck.ownerId !== shooter.id) {
+    return [moveCommand(shooter, state.puck.position, tick)];
+  }
+
+  // Straight center shots are always saved geometrically; approach on an angle and pick a corner.
+  const goalX = attackingGoalX(shooter.teamId, 1);
+  const side = (state.seed + state.shootout.round + (shooter.teamId === 'home' ? 0 : 1)) % 2 === 0 ? 1 : -1;
+  const cornerY = side * (RINK.goalMouthWidth / 2 - 0.8);
+  const goalCenter = { x: goalX, y: 0 };
+
+  if (distance(shooter.position, goalCenter) <= SHOOTOUT_SHOT_RANGE) {
+    return [{ type: 'shoot', playerId: shooter.id, target: { x: goalX, y: cornerY }, tick, source: 'ai' }];
+  }
+
+  const approach = {
+    x: goalX > 0 ? goalX - SHOOTOUT_SHOT_RANGE * 0.9 : goalX + SHOOTOUT_SHOT_RANGE * 0.9,
+    y: -side * 6,
+  };
+  return [moveCommand(shooter, approach, tick)];
 }
 
 export function updateGoaliePositions(state: GameState): GameState {

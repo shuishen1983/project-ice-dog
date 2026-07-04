@@ -49,6 +49,14 @@
 - FR-036 Cap puck carrier speed below free-skating speed so defenders can close on the carrier.
 - FR-037 Default player switching selects the eligible skater closest to the puck, with deterministic tie-breaking.
 
+## Match Types And Shootout
+- FR-041 Offer two match types from the menu: Regulation (three periods) and Shootout.
+- FR-042 A shootout attempt places one shooter against the defending goalie; all other skaters are parked off-play and possession-ineligible.
+- FR-043 Shootout runs alternating best-of-5 attempts, home first, with sudden-death rounds if tied after five.
+- FR-044 An attempt ends on goal, goalie trap, the puck at rest or out of play behind the goal line, or attempt-timer expiry; rebounds stay live until then.
+- FR-045 Only the active shooter accepts commands during a shootout attempt; the AI takes the non-human team's attempts.
+- FR-046 Declare the shootout winner as soon as the result is mathematically decided (clinch) or a sudden-death round ends decided.
+
 ## Determinism And Replay
 - FR-029 The same seed and command log must reproduce the same final state.
 - FR-030 Replay output must include enough events to diagnose score, possession, faceoff, and period changes.

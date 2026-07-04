@@ -1,8 +1,15 @@
 import type { GameCommand } from './commands';
-import { FACE_OFF, MODE_PAUSE, PERIOD_COUNT, RINK, TICK_SECONDS } from './constants';
+import { FACE_OFF, MODE_PAUSE, PERIOD_COUNT, RINK, SHOOTOUT, TICK_SECONDS } from './constants';
 import type { GameEvent } from './events';
 import type { GameState, PlayerState, TeamId } from './state';
-import { attackingGoalX, defendingDirectionX, faceoffFormation, findPlayer, goalieCreasePosition } from './state';
+import {
+  attackingGoalX,
+  defendingDirectionX,
+  faceoffFormation,
+  findPlayer,
+  goalieCreasePosition,
+  puckPositionForOwner,
+} from './state';
 import { distance } from './vector';
 
 export function applySwitchCommand(state: GameState, command: Extract<GameCommand, { type: 'switchPlayer' }>): GameState {
@@ -42,12 +49,28 @@ export function appendEvent(state: GameState, event: GameEvent): GameState {
 }
 
 export function isCommandAllowed(state: GameState, command: GameCommand): boolean {
+  if (command.type === 'startMatch') {
+    return state.mode === 'Menu';
+  }
+
+  if (state.mode === 'Menu' || state.mode === 'AttemptSetup' || state.mode === 'AttemptEnd') {
+    return false;
+  }
+
   if (state.mode === 'Faceoff') {
     return command.type === 'switchPlayer' || command.type === 'pokeCheck';
   }
 
   if (state.mode !== 'Gameplay') {
     return command.type === 'switchPlayer';
+  }
+
+  if (state.matchType === 'shootout') {
+    return (
+      'playerId' in command &&
+      command.playerId === state.shootout?.shooterPlayerId &&
+      (command.type === 'move' || command.type === 'shoot')
+    );
   }
 
   if ('playerId' in command) {
@@ -165,6 +188,226 @@ export function resolveFaceoff(state: GameState, commands: GameCommand[]): GameS
   };
 }
 
+export function applyStartMatch(state: GameState, command: Extract<GameCommand, { type: 'startMatch' }>): GameState {
+  if (state.mode !== 'Menu') {
+    return state;
+  }
+
+  const started: GameState = {
+    ...state,
+    matchType: command.matchType,
+    events: [...state.events, { type: 'matchStarted', matchType: command.matchType, tick: state.tick }],
+  };
+
+  if (command.matchType === 'shootout') {
+    return startAttempt(
+      {
+        ...started,
+        shootout: {
+          round: 1,
+          shooterTeamId: 'home',
+          shooterPlayerId: shooterFor(started, 'home'),
+          attempts: { home: 0, away: 0 },
+        },
+      },
+      state.tick,
+    );
+  }
+
+  return startFaceoff(started, state.tick);
+}
+
+export function startAttempt(state: GameState, tick: number): GameState {
+  const shootout = state.shootout;
+  if (!shootout) {
+    return state;
+  }
+
+  const shooterTeamId = shootout.shooterTeamId;
+  const shooterId = shooterFor(state, shooterTeamId);
+  const attackDirection = attackingGoalX(shooterTeamId, 1) > 0 ? 1 : -1;
+
+  const placeRoster = (teamId: TeamId): PlayerState[] =>
+    state.teams[teamId].roster.map((player, index) => {
+      if (player.id === shooterId) {
+        return {
+          ...player,
+          position: { x: 0, y: 0 },
+          velocity: { x: 0, y: 0 },
+          facing: { x: attackDirection, y: 0 },
+          possessionEligible: true,
+          hasHumanControl: state.humanTeamId === teamId && player.id === state.teams[teamId].controlledPlayerId,
+          intent: 'idle' as const,
+        };
+      }
+      const parkedSign = teamId === 'home' ? -1 : 1;
+      return {
+        ...player,
+        position: { x: parkedSign * (SHOOTOUT.parkedBaseX - index * SHOOTOUT.parkedSpacingX), y: SHOOTOUT.parkedLineY },
+        velocity: { x: 0, y: 0 },
+        facing: { x: -parkedSign, y: 0 },
+        possessionEligible: false,
+        hasHumanControl: false,
+        intent: 'idle' as const,
+      };
+    });
+
+  const homeRoster = placeRoster('home');
+  const awayRoster = placeRoster('away');
+  const shooter = [...homeRoster, ...awayRoster].find((player) => player.id === shooterId) as PlayerState;
+
+  return {
+    ...state,
+    mode: 'AttemptSetup',
+    modeStartedTick: tick,
+    faceoff: undefined,
+    clockSeconds: SHOOTOUT.attemptSeconds,
+    shootout: { ...shootout, shooterPlayerId: shooterId },
+    teams: {
+      home: {
+        ...state.teams.home,
+        roster: homeRoster,
+        goalie: { ...state.teams.home.goalie, position: goalieCreasePosition('home', 1) },
+      },
+      away: {
+        ...state.teams.away,
+        roster: awayRoster,
+        goalie: { ...state.teams.away.goalie, position: goalieCreasePosition('away', 1) },
+      },
+    },
+    puck: {
+      ...state.puck,
+      position: puckPositionForOwner(shooter),
+      velocity: { x: 0, y: 0 },
+      ownerId: shooterId,
+      state: 'held',
+      lastTouchPlayerId: shooterId,
+      lastTouchTeamId: shooterTeamId,
+      intent: 'none',
+      ageTicks: 0,
+      repossessLockout: undefined,
+      receiveWindow: undefined,
+      goalieHold: undefined,
+    },
+    events: [
+      ...state.events,
+      { type: 'attemptStarted', round: shootout.round, teamId: shooterTeamId, playerId: shooterId, tick },
+      { type: 'modeChanged', mode: 'AttemptSetup', tick },
+    ],
+  };
+}
+
+export function resolveAttemptEndIfNeeded(state: GameState): GameState {
+  if (state.matchType !== 'shootout' || state.mode !== 'Gameplay') {
+    return state;
+  }
+
+  if (state.puck.goalieHold) {
+    return endAttempt(state, state.tick);
+  }
+
+  if (state.puck.state === 'loose' && Math.abs(state.puck.position.x) > RINK.goalLineX) {
+    return endAttempt(state, state.tick);
+  }
+
+  return state;
+}
+
+function endAttempt(state: GameState, tick: number): GameState {
+  return {
+    ...state,
+    mode: 'AttemptEnd',
+    modeStartedTick: tick,
+    puck: {
+      ...state.puck,
+      ownerId: undefined,
+      state: 'loose',
+      velocity: { x: 0, y: 0 },
+      goalieHold: undefined,
+      receiveWindow: undefined,
+    },
+    events: [...state.events, { type: 'modeChanged', mode: 'AttemptEnd', tick }],
+  };
+}
+
+function advanceShootoutAfterAttempt(state: GameState, tick: number, scored: boolean): GameState {
+  const shootout = state.shootout;
+  if (!shootout) {
+    return state;
+  }
+
+  const attempts: Record<TeamId, number> = {
+    ...shootout.attempts,
+    [shootout.shooterTeamId]: shootout.attempts[shootout.shooterTeamId] + 1,
+  };
+  const events: GameEvent[] = [
+    ...state.events,
+    { type: 'attemptEnded', round: shootout.round, teamId: shootout.shooterTeamId, scored, tick },
+  ];
+  const goals: Record<TeamId, number> = {
+    home: state.teams.home.score,
+    away: state.teams.away.score,
+  };
+
+  const winnerTeamId = shootoutWinner(goals, attempts);
+  if (winnerTeamId) {
+    return {
+      ...state,
+      mode: 'GameEnd',
+      modeStartedTick: tick,
+      winnerTeamId,
+      shootout: { ...shootout, attempts },
+      events: [
+        ...events,
+        { type: 'gameEnded', winnerTeamId, tick },
+        { type: 'modeChanged', mode: 'GameEnd', tick },
+      ],
+    };
+  }
+
+  const nextShooterTeamId: TeamId = shootout.shooterTeamId === 'home' ? 'away' : 'home';
+  const nextRound = shootout.shooterTeamId === 'home' ? shootout.round : shootout.round + 1;
+  return startAttempt(
+    {
+      ...state,
+      shootout: {
+        round: nextRound,
+        shooterTeamId: nextShooterTeamId,
+        shooterPlayerId: shooterFor(state, nextShooterTeamId),
+        attempts,
+      },
+      events,
+    },
+    tick,
+  );
+}
+
+function shootoutWinner(goals: Record<TeamId, number>, attempts: Record<TeamId, number>): TeamId | undefined {
+  const pairs: Array<[TeamId, TeamId]> = [
+    ['home', 'away'],
+    ['away', 'home'],
+  ];
+  for (const [leader, trailer] of pairs) {
+    if (attempts[trailer] < SHOOTOUT.rounds && goals[leader] > goals[trailer] + (SHOOTOUT.rounds - attempts[trailer])) {
+      return leader;
+    }
+  }
+
+  if (attempts.home === attempts.away && attempts.home >= SHOOTOUT.rounds && goals.home !== goals.away) {
+    return goals.home > goals.away ? 'home' : 'away';
+  }
+
+  return undefined;
+}
+
+function shooterFor(state: GameState, teamId: TeamId): string {
+  if (state.humanTeamId === teamId) {
+    return state.teams[teamId].controlledPlayerId;
+  }
+  const center = state.teams[teamId].roster.find((player) => player.role === 'center');
+  return center?.id ?? state.teams[teamId].controlledPlayerId;
+}
+
 export function resolveGoalIfNeeded(state: GameState): GameState {
   if (state.mode !== 'Gameplay') {
     return state;
@@ -211,6 +454,10 @@ export function advanceRulesClock(state: GameState): GameState {
     return { ...state, clockSeconds };
   }
 
+  if (state.matchType === 'shootout') {
+    return endAttempt({ ...state, clockSeconds }, state.tick);
+  }
+
   const periodEndedEvent: GameEvent = { type: 'periodEnded', period: state.period, tick: state.tick };
   if (state.period >= PERIOD_COUNT) {
     const winnerTeamId = winnerForScore(state);
@@ -240,7 +487,22 @@ export function advanceRulesClock(state: GameState): GameState {
 
 export function advanceTimedMode(state: GameState): GameState {
   if (state.mode === 'Goal' && state.tick - state.modeStartedTick >= MODE_PAUSE.goalTicks) {
-    return startFaceoff(state, state.tick);
+    return state.matchType === 'shootout'
+      ? advanceShootoutAfterAttempt(state, state.tick, true)
+      : startFaceoff(state, state.tick);
+  }
+
+  if (state.mode === 'AttemptSetup' && state.tick - state.modeStartedTick >= SHOOTOUT.setupTicks) {
+    return {
+      ...state,
+      mode: 'Gameplay',
+      modeStartedTick: state.tick,
+      events: [...state.events, { type: 'modeChanged', mode: 'Gameplay', tick: state.tick }],
+    };
+  }
+
+  if (state.mode === 'AttemptEnd' && state.tick - state.modeStartedTick >= MODE_PAUSE.attemptEndTicks) {
+    return advanceShootoutAfterAttempt(state, state.tick, false);
   }
 
   if (state.mode === 'PeriodEnd' && state.tick - state.modeStartedTick >= MODE_PAUSE.periodEndTicks) {

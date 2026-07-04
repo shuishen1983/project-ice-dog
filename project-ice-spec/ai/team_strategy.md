@@ -49,6 +49,11 @@ Priority order:
 4. Retrieve loose puck when closest and safe.
 5. Recover rebounds near the crease.
 
+## Shootout
+- Only the active shooter is commanded; parked skaters receive no commands.
+- The AI shooter reuses the puck-carrier priority list: shoot when a lane opens within shot range, otherwise skate toward the goal.
+- The defending goalie uses unchanged goalie behavior; the idle goalie holds its own crease.
+
 ## Goalie Behavior
 - Stay near crease center when puck is low threat.
 - Square to puck position when threat rises.

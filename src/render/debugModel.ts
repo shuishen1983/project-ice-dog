@@ -41,5 +41,11 @@ function eventLabel(event: GameEvent): string {
       return `faceoff:${event.spotId}`;
     case 'puckReleased':
       return `release:${event.playerId}`;
+    case 'matchStarted':
+      return `match:${event.matchType}`;
+    case 'attemptStarted':
+      return `attempt:${event.teamId}:r${event.round}`;
+    case 'attemptEnded':
+      return event.scored ? `attempt:${event.teamId}:goal` : `attempt:${event.teamId}:miss`;
   }
 }

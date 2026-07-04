@@ -30,6 +30,8 @@ export function stateHash(state: GameState): string {
       humanTeamId: state.humanTeamId,
       tick: state.tick,
       mode: state.mode,
+      matchType: state.matchType,
+      shootout: state.shootout,
       period: state.period,
       periodSeconds: round(state.periodSeconds),
       clockSeconds: round(state.clockSeconds),

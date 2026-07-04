@@ -16,9 +16,11 @@ import { clampToRink } from '../physics/rink';
 import {
   advanceRulesClock,
   advanceTimedMode,
+  applyStartMatch,
   applySwitchCommand,
   appendEvent,
   isCommandAllowed,
+  resolveAttemptEndIfNeeded,
   resolveFaceoff,
   resolveGoalIfNeeded,
 } from './rules';
@@ -47,6 +49,11 @@ export function advanceTick(state: GameState, commands: GameCommand[] = []): Tic
 
   for (const command of tickCommands) {
     if (!isCommandAllowed(nextState, command)) {
+      continue;
+    }
+
+    if (command.type === 'startMatch') {
+      nextState = applyStartMatch(nextState, command);
       continue;
     }
 
@@ -119,6 +126,7 @@ export function advanceTick(state: GameState, commands: GameCommand[] = []): Tic
   nextState = resolveGoalieSave(nextState);
   nextState = resolveLoosePuckPickup(nextState);
   nextState = resolveGoalIfNeeded(nextState);
+  nextState = resolveAttemptEndIfNeeded(nextState);
   nextState = advanceRulesClock(nextState);
 
   return { state: nextState };
