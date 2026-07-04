@@ -13,7 +13,7 @@ export class ControlsHelp {
       fontFamily: 'Inter, Arial, sans-serif',
       fontSize: '20px',
       fontStyle: '700',
-      padding: { x: 10, y: 4 },
+      padding: { x: 10, y: 12 },
     });
     this.button.setOrigin(1, 0);
     this.button.setDepth(20);

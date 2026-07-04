@@ -10,6 +10,10 @@ export class Hud {
   private readonly boostText: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
+    const background = scene.add.rectangle(0, 0, 1100, 58, 0x10202f, 0.82);
+    background.setOrigin(0, 0);
+    background.setDepth(9);
+
     this.homeScoreText = scene.add.text(24, 16, '', {
       color: TEAM_COLORS.home.hud,
       fontFamily: 'Inter, Arial, sans-serif',

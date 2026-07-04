@@ -20,7 +20,7 @@ export class IceScene extends Phaser.Scene {
   private graphics!: Phaser.GameObjects.Graphics;
   private hud!: Hud;
   private menu!: Phaser.GameObjects.Container;
-  private debugOverlay!: DebugOverlay;
+  private debugOverlay?: DebugOverlay;
   private keyboardInput!: KeyboardInput;
   private touchControls?: TouchControls;
   private menuSelection?: MatchType;
@@ -33,7 +33,9 @@ export class IceScene extends Phaser.Scene {
     this.simulation = new FixedStepSimulation(createInitialState({ seed: 1, startInMenu: true, enableAi: true }));
     this.graphics = this.add.graphics();
     this.hud = new Hud(this);
-    this.debugOverlay = new DebugOverlay(this);
+    if (import.meta.env.DEV) {
+      this.debugOverlay = new DebugOverlay(this);
+    }
     new ControlsHelp(this);
     this.menu = this.createMenu();
     this.keyboardInput = new KeyboardInput(this);
@@ -109,7 +111,7 @@ export class IceScene extends Phaser.Scene {
     this.drawPlayers(snapshot);
     this.drawPuck(snapshot);
     this.hud.render(snapshot);
-    this.debugOverlay.render(snapshot);
+    this.debugOverlay?.render(snapshot);
     this.menu.setVisible(snapshot.mode === 'Menu');
   }
 
