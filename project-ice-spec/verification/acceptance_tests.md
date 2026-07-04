@@ -138,3 +138,14 @@ Acceptance tests should exercise simulation behavior through public commands and
   - Given the browser game starts
   - When the first gameplay snapshot is rendered
   - Then rink, boards, goals, puck, skaters, goalies, score, period, clock, selected-player marker, and skater facing indicators are visible.
+
+## Input Devices
+- AT-027 Device parity.
+  - Given identical InputFrame sequences from any device provider
+  - When they are mapped to commands
+  - Then the command streams and simulation outcomes are identical.
+
+- AT-028 Touch mapping completeness.
+  - Given the touch control scheme
+  - When each control is exercised
+  - Then move, pass, shoot, poke, boost, switch, and both menu selections each produce their command.

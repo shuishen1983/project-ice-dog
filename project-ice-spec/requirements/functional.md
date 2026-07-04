@@ -42,6 +42,9 @@
 - FR-028 Visual feedback must make goals, faceoffs, possession changes, and selected-player changes readable.
 - FR-038 Render a facing indicator on every skater, emphasized on the selected skater, so pass and shot aiming direction is readable.
 - FR-039 Provide a control-hints overlay listing the input mapping, toggled by clicking a visible help button or pressing Ctrl+H.
+- FR-049 Normalize all device input into per-tick input frames mapped to commands by shared, device-agnostic logic.
+- FR-050 Provide touch controls (virtual joystick, action buttons, tappable menu) with feature parity to the keyboard mapping.
+- FR-051 The page must not scroll, zoom, or select text during play on touch devices; the layout must remain usable on iPad-class screens.
 
 ## Faceoffs And Physics Detail
 - FR-032 Use the center-ice faceoff spot for all MVP restarts.

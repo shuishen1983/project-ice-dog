@@ -138,8 +138,19 @@ The MVP uses a simple player-switching model:
 - Pass: J or Z.
 - Shoot: K or X.
 - Poke check: L or C.
+- Speed boost: Shift.
 - Switch player: Space.
 - Mouse aiming and gamepad support are deferred from MVP.
+
+### Input Abstraction And Platforms
+The game targets desktop browsers (keyboard) and iPad (touch) from one codebase (DEC-024).
+
+- Device input is normalized into an `InputFrame`: a per-tick sample of the desired skating direction plus edge-triggered action flags (pass, shoot, poke, boost, switch, menu selections).
+- A pure, Phaser-free mapping layer (`src/input/`) converts an `InputFrame` plus the current render snapshot into `GameCommand`s. The simulation only ever sees commands and cannot distinguish devices (AT-027).
+- Device providers live in the renderer layer: `KeyboardInput` (Phaser keys) and `TouchControls` (virtual joystick and buttons). Providers are sampled every simulation tick and their frames merged — action flags OR together, and the first nonzero direction wins (touch before keyboard) — so both schemes are always live; there is no mode switch.
+- Touch scheme (DEC-025): a floating joystick spawns where the left-zone touch lands and steers skating; right-thumb buttons trigger Pass, Shoot, Poke, Boost, and Switch; menu entries are tappable. Touch controls appear when a coarse pointer is detected, or when `?touch=1` forces them for testing.
+- iPad delivery is a Capacitor native shell wrapping the same Vite build (`capacitor.config.ts`, webDir `dist`); the browser deploy is unchanged. Native project generation, building, and signing happen on macOS with Xcode.
+- The `src/input` layer is bound by the same rule as sim/physics/ai: it must not import Phaser.
 
 ### Aiming Rules
 - A skater's facing is the direction of the most recent nonzero movement input; it defaults to facing the attacking goal at faceoffs.
