@@ -1,5 +1,5 @@
 import type { GameCommand } from './commands';
-import { FACE_OFF, MODE_PAUSE, PERIOD_COUNT, RINK, SHOOTOUT, TICK_SECONDS } from './constants';
+import { BOOST, FACE_OFF, MODE_PAUSE, PERIOD_COUNT, RINK, SHOOTOUT, TICK_SECONDS } from './constants';
 import type { GameEvent } from './events';
 import type { GameState, PlayerState, TeamId } from './state';
 import {
@@ -69,7 +69,7 @@ export function isCommandAllowed(state: GameState, command: GameCommand): boolea
     return (
       'playerId' in command &&
       command.playerId === state.shootout?.shooterPlayerId &&
-      (command.type === 'move' || command.type === 'shoot')
+      (command.type === 'move' || command.type === 'shoot' || command.type === 'boost')
     );
   }
 
@@ -79,7 +79,12 @@ export function isCommandAllowed(state: GameState, command: GameCommand): boolea
       return false;
     }
 
-    if (command.source !== 'ai' && command.type === 'move' && state.humanTeamId && player.teamId === state.humanTeamId) {
+    if (
+      command.source !== 'ai' &&
+      (command.type === 'move' || command.type === 'boost') &&
+      state.humanTeamId &&
+      player.teamId === state.humanTeamId
+    ) {
       return player.id === state.teams[state.humanTeamId].controlledPlayerId;
     }
 
@@ -185,6 +190,34 @@ export function resolveFaceoff(state: GameState, commands: GameCommand[]): GameS
       { type: 'faceoffWon', teamId: winner.teamId, playerId: winner.id, tick: state.tick },
       { type: 'modeChanged', mode: 'Gameplay', tick: state.tick },
     ],
+  };
+}
+
+export function applyBoostCommand(state: GameState, command: Extract<GameCommand, { type: 'boost' }>): GameState {
+  const player = findPlayer(state, command.playerId);
+  if (!player || state.tick < player.boostReadyAtTick) {
+    return state;
+  }
+
+  const team = state.teams[player.teamId];
+  return {
+    ...state,
+    teams: {
+      ...state.teams,
+      [player.teamId]: {
+        ...team,
+        roster: team.roster.map((rosterPlayer) =>
+          rosterPlayer.id === player.id
+            ? {
+                ...rosterPlayer,
+                boostUntilTick: state.tick + BOOST.durationTicks,
+                boostReadyAtTick: state.tick + BOOST.durationTicks + BOOST.cooldownTicks,
+              }
+            : rosterPlayer,
+        ),
+      },
+    },
+    events: [...state.events, { type: 'boostStarted', playerId: player.id, tick: state.tick }],
   };
 }
 

@@ -8,6 +8,7 @@ export const CONTROL_HINTS: ControlHint[] = [
   { keys: 'J / Z', action: 'Pass' },
   { keys: 'K / X', action: 'Shoot' },
   { keys: 'L / C', action: 'Poke check / faceoff swipe' },
+  { keys: 'Shift', action: 'Speed boost (per-player recovery)' },
   { keys: 'Space', action: 'Switch to skater closest to puck' },
   { keys: 'Ctrl+H or ? button', action: 'Show or hide these hints' },
 ];

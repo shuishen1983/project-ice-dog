@@ -34,6 +34,11 @@ Acceptance tests should exercise simulation behavior through public commands and
   - When a movement command is applied
   - Then only that skater receives human movement intent.
 
+- AT-026 Speed boost is short-lived with per-player recovery.
+  - Given a controlled skater accepts a boost command
+  - When the skater accelerates during the boost window
+  - Then its speed may exceed the normal cap, a boost during recovery has no effect, the cap returns to normal after the boost, and another player's boost readiness is unaffected.
+
 ## Puck And Physics
 - AT-007 Pass, receive, and possession change are deterministic.
   - Given a pass to an open teammate

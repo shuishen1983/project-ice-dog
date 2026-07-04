@@ -10,6 +10,7 @@ export type GameCommand =
   | { type: 'shoot'; playerId: string; target: Vec2; tick: number; source?: CommandSource }
   | { type: 'dump'; playerId: string; target: Vec2; tick: number; source?: CommandSource }
   | { type: 'pokeCheck'; playerId: string; direction: Vec2; tick: number; source?: CommandSource }
+  | { type: 'boost'; playerId: string; tick: number; source?: CommandSource }
   | { type: 'startMatch'; matchType: MatchType; tick: number; source?: CommandSource };
 
 export function sortCommands(commands: GameCommand[]): GameCommand[] {

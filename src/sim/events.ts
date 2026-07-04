@@ -10,4 +10,5 @@ export type GameEvent =
   | { type: 'matchStarted'; matchType: string; tick: number }
   | { type: 'attemptStarted'; round: number; teamId: string; playerId: string; tick: number }
   | { type: 'attemptEnded'; round: number; teamId: string; scored: boolean; tick: number }
+  | { type: 'boostStarted'; playerId: string; tick: number }
   | { type: 'gameEnded'; winnerTeamId?: string; tick: number };

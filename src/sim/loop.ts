@@ -16,6 +16,7 @@ import { clampToRink } from '../physics/rink';
 import {
   advanceRulesClock,
   advanceTimedMode,
+  applyBoostCommand,
   applyStartMatch,
   applySwitchCommand,
   appendEvent,
@@ -64,6 +65,11 @@ export function advanceTick(state: GameState, commands: GameCommand[] = []): Tic
 
     if (command.type === 'move') {
       movementByPlayer.set(command.playerId, command.direction);
+      continue;
+    }
+
+    if (command.type === 'boost') {
+      nextState = applyBoostCommand(nextState, command);
       continue;
     }
 
@@ -177,7 +183,12 @@ function integrateTeamSkaters(state: GameState, teamId: TeamId, movementByPlayer
   return {
     ...team,
     roster: team.roster.map((player) =>
-      integrateSkater(player, movementByPlayer.get(player.id) ?? ZERO_VEC, state.puck.ownerId === player.id),
+      integrateSkater(
+        player,
+        movementByPlayer.get(player.id) ?? ZERO_VEC,
+        state.puck.ownerId === player.id,
+        state.tick < player.boostUntilTick,
+      ),
     ),
   };
 }

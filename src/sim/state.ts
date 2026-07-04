@@ -20,6 +20,8 @@ export type PlayerState = {
   hasHumanControl: boolean;
   possessionEligible: boolean;
   intent: 'idle' | 'move' | 'pass' | 'shoot' | 'support';
+  boostUntilTick: number;
+  boostReadyAtTick: number;
 };
 
 export type GoalieState = {
@@ -313,6 +315,8 @@ function createRoster(teamId: TeamId, starts: Array<[PlayerRole, Vec2]>, centerI
       hasHumanControl: false,
       possessionEligible: true,
       intent: 'idle',
+      boostUntilTick: 0,
+      boostReadyAtTick: 0,
     };
   });
 }

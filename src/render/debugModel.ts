@@ -47,5 +47,7 @@ function eventLabel(event: GameEvent): string {
       return `attempt:${event.teamId}:r${event.round}`;
     case 'attemptEnded':
       return event.scored ? `attempt:${event.teamId}:goal` : `attempt:${event.teamId}:miss`;
+    case 'boostStarted':
+      return `boost:${event.playerId}`;
   }
 }

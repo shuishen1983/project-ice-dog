@@ -13,6 +13,8 @@
 - FR-008 Support 3 skaters plus 1 goalie per team on the rink.
 - FR-009 Allow exactly one human-controlled skater at a time.
 - FR-010 Switch human control to another eligible skater immediately after a switch command.
+- FR-047 Provide a short speed boost for the controlled skater that raises max speed and acceleration for a fixed duration.
+- FR-048 Enforce a per-player boost recovery period; a boost command during recovery has no effect. Boost readiness must be visible to the player.
 - FR-011 AI controls all non-human skaters and the opposing team.
 - FR-012 Goalies are AI-controlled in MVP.
 

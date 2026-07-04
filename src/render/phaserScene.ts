@@ -32,7 +32,7 @@ export class IceScene extends Phaser.Scene {
     new ControlsHelp(this);
     this.menu = this.createMenu();
     this.cursors = this.input.keyboard?.createCursorKeys();
-    this.keys = this.input.keyboard?.addKeys('W,A,S,D,J,K,L,Z,X,C,SPACE,ONE,TWO') as Record<
+    this.keys = this.input.keyboard?.addKeys('W,A,S,D,J,K,L,Z,X,C,SPACE,ONE,TWO,SHIFT') as Record<
       string,
       Phaser.Input.Keyboard.Key
     >;
@@ -85,6 +85,9 @@ export class IceScene extends Phaser.Scene {
 
     if (justDown(this.keys?.SPACE)) {
       commands.push({ type: 'switchPlayer' as const, teamId: 'home' as const, tick });
+    }
+    if (justDown(this.keys?.SHIFT)) {
+      commands.push({ type: 'boost' as const, playerId: selectedPlayerId, tick });
     }
     if (justDown(this.keys?.K) || justDown(this.keys?.X)) {
       commands.push({
@@ -190,6 +193,11 @@ export class IceScene extends Phaser.Scene {
       if (hasPuck) {
         this.graphics.lineStyle(4, 0x2fbf71, 1);
         this.graphics.strokeCircle(screenX, screenY, player.radius * SCALE + 10);
+      }
+
+      if (snapshot.tick < player.boostUntilTick) {
+        this.graphics.lineStyle(3, 0x22b8cf, 1);
+        this.graphics.strokeCircle(screenX, screenY, player.radius * SCALE + 14);
       }
 
       const stickLength = (player.radius + (selected ? 3.5 : 2.5)) * SCALE;

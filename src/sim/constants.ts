@@ -50,6 +50,13 @@ export const SKATER = {
   radius: 1.5,
 };
 
+export const BOOST = {
+  speedFactor: 1.4,
+  accelFactor: 1.6,
+  durationTicks: 75,
+  cooldownTicks: 240,
+};
+
 export const GOALIE = {
   radius: 1.5,
   creaseOffset: 2,

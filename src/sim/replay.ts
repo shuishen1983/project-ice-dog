@@ -53,6 +53,8 @@ export function stateHash(state: GameState): string {
         velocity: roundVec(player.velocity),
         facing: roundVec(player.facing),
         intent: player.intent,
+        boostUntilTick: player.boostUntilTick,
+        boostReadyAtTick: player.boostReadyAtTick,
       })),
       goalies: [state.teams.home.goalie, state.teams.away.goalie].map((goalie) => ({
         id: goalie.id,
