@@ -106,16 +106,18 @@ function createTeamCommands(state: GameState, teamId: TeamId, tick: number): Gam
 
       if (player.id === closestEligibleSkater(state, teamId)?.id) {
         commands.push(moveCommand(player, state.puck.position, tick));
+      } else {
+        commands.push(supportCommand(state, player, state.puck.position, tick));
       }
       continue;
     }
 
     if (owner.teamId === teamId) {
-      commands.push(supportCommand(state, player, owner, tick));
+      commands.push(supportCommand(state, player, owner.position, tick));
       continue;
     }
 
-    const pressurePlayer = closestEligibleSkaterToPoint(roster, owner.position);
+    const pressurePlayer = closestEligibleSkaterToPoint(aiControlledSkaters(state, teamId), owner.position);
     if (pressurePlayer?.id === player.id) {
       commands.push(moveCommand(player, owner.position, tick));
       if (distance(player.position, owner.position) <= PRESSURE_RADIUS * 0.55) {
@@ -153,12 +155,12 @@ function carrierCommands(state: GameState, carrier: PlayerState, tick: number): 
   return [moveCommand(carrier, goal, tick)];
 }
 
-function supportCommand(state: GameState, player: PlayerState, carrier: PlayerState, tick: number): GameCommand {
-  const attackSign = attackingGoalX(player.teamId, state.period) > carrier.position.x ? 1 : -1;
+function supportCommand(state: GameState, player: PlayerState, anchor: Vec2, tick: number): GameCommand {
+  const attackSign = attackingGoalX(player.teamId, state.period) > anchor.x ? 1 : -1;
   const laneY = player.role === 'wing' ? -SUPPORT_WIDE_OFFSET : SUPPORT_WIDE_OFFSET;
   const target = {
-    x: carrier.position.x + attackSign * SUPPORT_FORWARD_OFFSET,
-    y: player.role === 'defense' ? carrier.position.y + SUPPORT_WIDE_OFFSET : laneY,
+    x: anchor.x + attackSign * SUPPORT_FORWARD_OFFSET,
+    y: player.role === 'defense' ? anchor.y + SUPPORT_WIDE_OFFSET : laneY,
   };
   return moveCommand(player, clampToRink(target, RINK, player.radius), tick);
 }
@@ -209,7 +211,11 @@ function isHumanControlled(state: GameState, player: PlayerState): boolean {
 }
 
 function closestEligibleSkater(state: GameState, teamId: TeamId): PlayerState | undefined {
-  return closestEligibleSkaterToPoint(state.teams[teamId].roster, state.puck.position);
+  return closestEligibleSkaterToPoint(aiControlledSkaters(state, teamId), state.puck.position);
+}
+
+function aiControlledSkaters(state: GameState, teamId: TeamId): PlayerState[] {
+  return state.teams[teamId].roster.filter((player) => !isHumanControlled(state, player));
 }
 
 function closestEligibleSkaterToPoint(players: PlayerState[], point: Vec2): PlayerState | undefined {

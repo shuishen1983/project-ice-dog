@@ -103,7 +103,41 @@ describe('Pass 3 team AI and goalie behavior', () => {
       }),
     );
   });
+
+  it('keeps human-team AI teammates moving on a loose puck even when the human is closest', () => {
+    const state = looseSkirmishFixture();
+    const commands = createAiCommands(state, 1);
+    const homeMoves = commands.filter((command) => command.type === 'move' && command.playerId.startsWith('home'));
+
+    expect(homeMoves.map((command) => ('playerId' in command ? command.playerId : ''))).toEqual(['home-w', 'home-d']);
+    expect(commands.find((command) => 'playerId' in command && command.playerId === 'home-c')).toBeUndefined();
+  });
 });
+
+function looseSkirmishFixture(): GameState {
+  const state = createInitialState({ seed: 4, startInGameplay: true, enableAi: true });
+  return {
+    ...state,
+    teams: {
+      ...state.teams,
+      home: {
+        ...state.teams.home,
+        roster: state.teams.home.roster.map((player) =>
+          player.id === 'home-c' ? { ...player, position: { x: -2, y: 0 } } : player,
+        ),
+      },
+    },
+    puck: {
+      ...state.puck,
+      position: { x: 0, y: 0 },
+      ownerId: undefined,
+      state: 'loose',
+      intent: 'none',
+      receiveWindow: undefined,
+      repossessLockout: undefined,
+    },
+  };
+}
 
 function oneTimerAiFixture(): GameState {
   const state = createInitialState({ seed: 5, startInGameplay: true, enableAi: true });
