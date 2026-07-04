@@ -2,3 +2,18 @@ node_modules/
 dist/
 .vite/
 coverage/
+
+# macOS
+.DS_Store
+
+# Capacitor iOS generated artifacts
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/App/App/config.xml
+ios/App/Pods/
+ios/App/build/
+ios/App/DerivedData/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcworkspace/xcuserdata/
+ios/capacitor-cordova-ios-plugins/
+*.xcuserstate
